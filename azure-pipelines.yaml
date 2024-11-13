@@ -37,17 +37,23 @@ stages:
 
     # Run Terraform Init on the pipeline agent 
     # ToDo: Replace the resource group name, storage account name, and container name below
+    # Run Terraform Init on the pipeline agent 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
-      displayName: 'Terrafom init'
+      displayName: 'Terraform Init'
       inputs:
         provider: 'azurerm'
         command: 'init'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        backendServiceArm: '$(azureServiceConnectionId)'
+        backendServiceArm: '$(azureServiceConnectionId)'  # Ensure this is set correctly
         backendAzureRmResourceGroupName: 'Azuredevops'
         backendAzureRmStorageAccountName: 'tfstate103417257'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: '$(terraformBackendKey)'
+        backendAzureRmKey: '$(terraformBackendKey)'  # Use a secret variable here
+        backendAzureRmTenantId: '$(tenant_id)'  # Add your tenant ID
+        backendAzureRmClientId: '$(client-id)'    # Add your Service Principal client ID
+        backendAzureRmClientSecret: '$(client-secret)'  # Use a secret variable for the client secret
+
+    # Run Terraform validate on the pipeline agent 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
       displayName: Terraform validate
       inputs:
