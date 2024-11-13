@@ -51,24 +51,6 @@ stages:
         backendAzureRmKey: "$(access_key)"
     
     
-    # Check for and unlock the Terraform state if necessary
-    - script: |
-        echo "Checking for Terraform state lock..."
-        LOCK_ID=$(terraform workspace show | grep -oP '(?<=ID: ).*')
-        if [ -n "$LOCK_ID" ]; then
-          echo "State is locked. Attempting to unlock..."
-          for i in {1..5}; do  # Retry up to 5 times
-            terraform force-unlock $LOCK_ID && break || {
-              echo "Failed to unlock state. Retrying in 10 seconds..."
-              sleep 10
-            }
-          done
-        else
-          echo "No lock found."
-        fi
-      displayName: 'Check and Unlock Terraform State'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
       displayName: Terraform validate
@@ -76,15 +58,16 @@ stages:
         provider: 'azurerm'
         command: 'validate'
 
-    # Run Terraform Plan on the pipeline agent
+    # force unlock with id
     - task: TerraformTaskV4@4
-      displayName: terraform plan -lock=false ...
+      displayName: 'Terraform force unlock'
       inputs:
         provider: 'azurerm'
-        command: 'plan'
+        command: 'force-unlock'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
-        
+        commandOptions: '-force-unlock b5843c44-6af9-d123-1637-1b5ef8acdba9'
+
     # OPTIONAL - This step is needed only if your Terraform VM uses an SSH key pair for login and you want your pipeline agent to connect to it. 
     # Generate an SSH key pair in your local/AZ Cloud shell. Use the public key in the Terraform VM module. 
     # Install public key and private key file to the pipeline agent, using the task below. 
