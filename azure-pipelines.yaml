@@ -39,9 +39,11 @@ stages:
     # ToDo: Replace the resource group name, storage account name, and container name below
     # Run Terraform Init on the pipeline agent 
     - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
       inputs:
         provider: 'azurerm'
         command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
         backendAzureRmResourceGroupName: 'Azuredevops'
         backendAzureRmStorageAccountName: 'tfstate103417257'
@@ -49,7 +51,7 @@ stages:
         backendAzureRmKey: "$(access_key)"
     
     # Run Terraform validate on the pipeline agent 
-    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
+    - task: TerraformTaskV4@4
       displayName: Terraform validate
       inputs:
         provider: 'azurerm'
@@ -71,7 +73,7 @@ stages:
     #  inputs:
     #   secureFile: 
     # Run Terraform Apply
-    - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
+    - task: TerraformTaskV4@4
       displayName: Terraform apply
       inputs:
         provider: 'azurerm'
