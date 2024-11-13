@@ -76,6 +76,15 @@ stages:
         provider: 'azurerm'
         command: 'validate'
 
+    # Run Terraform Plan on the pipeline agent
+    - task: TerraformTaskV4@4
+      displayName: terraform plan -lock=false ...
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+        
     # OPTIONAL - This step is needed only if your Terraform VM uses an SSH key pair for login and you want your pipeline agent to connect to it. 
     # Generate an SSH key pair in your local/AZ Cloud shell. Use the public key in the Terraform VM module. 
     # Install public key and private key file to the pipeline agent, using the task below. 
