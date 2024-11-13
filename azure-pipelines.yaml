@@ -50,6 +50,20 @@ stages:
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: "$(access_key)"
     
+    
+    # Check for and unlock the Terraform state if necessary
+    - script: |
+        echo "Checking for Terraform state lock..."
+        LOCK_ID=$(terraform workspace show | grep -oP '(?<=ID: ).*')
+        if [ -n "$LOCK_ID" ]; then
+          echo "State is locked. Attempting to unlock..."
+          terraform force-unlock $LOCK_ID || echo "Failed to unlock state. Please check manually."
+        else
+          echo "No lock found."
+        fi
+      displayName: 'Check and Unlock Terraform State'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
       displayName: Terraform validate
