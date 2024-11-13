@@ -30,14 +30,10 @@ stages:
     #--------------------------------------------#  
     # Use Terraform to create the Infrastructure      
     # Install Terraform on the pipeline agent 
-    - task: UsePythonVersion@0
+    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Terraform installation'
       inputs:
-        versionSpec: '$(python.version)'
-        addToPath: true
-    - script: |
-        python -m pip install --upgrade pip
-        pip install terraform
-      displayName: 'Install Terraform'
+        terraformVersion: '1.2.9'
 
     # Run Terraform Init on the pipeline agent 
     # ToDo: Replace the resource group name, storage account name, and container name below
