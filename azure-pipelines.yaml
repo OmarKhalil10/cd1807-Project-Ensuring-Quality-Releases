@@ -49,8 +49,6 @@ stages:
         backendAzureRmStorageAccountName: 'tfstate103417257'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: "$(access_key)"
-        commandOptions: 
-    
     
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
@@ -58,24 +56,6 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'validate'
-
-    # Check for and unlock the Terraform state if necessary
-    - script: |
-        echo "Checking for Terraform state lock..."
-        LOCK_ID=$(terraform workspace show | grep -oP '(?<=ID: ).*')
-        if [ -n "$LOCK_ID" ]; then
-          echo "State is locked. Attempting to unlock..."
-          for i in {1..5}; do  # Retry up to 5 times
-            terraform force-unlock $LOCK_ID && break || {
-              echo "Failed to unlock state. Retrying in 10 seconds..."
-              sleep 10
-            }
-          done
-        else
-          echo "No lock found."
-        fi
-      displayName: 'Check and Unlock Terraform State'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
     # OPTIONAL - This step is needed only if your Terraform VM uses an SSH key pair for login and you want your pipeline agent to connect to it. 
     # Generate an SSH key pair in your local/AZ Cloud shell. Use the public key in the Terraform VM module. 
@@ -92,6 +72,7 @@ stages:
     #  displayName: 
     #  inputs:
     #   secureFile: 
+
     # Run Terraform Apply
     - task: TerraformTaskV4@4
       displayName: Terraform apply
@@ -100,8 +81,6 @@ stages:
         command: 'apply'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
-        commandOptions: '-auto-approve'  # Automatically approve the apply
-
 
     # # ToDo: Change the workingDirectory path, as applicable to you
     # # Destroy the resources in Azure by running a separate pipeline. 
