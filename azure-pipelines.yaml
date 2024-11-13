@@ -38,7 +38,9 @@ stages:
           # Ensure nvm is sourced into the current shell session
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm install 1.2.9
+          # Install a valid Node.js version
+          nvm install 14.17.0  # Replace with your desired version
+
           
     # Run Terraform Init on the pipeline agent 
     # ToDo: Replace the resource group name, storage account name, and container name below
