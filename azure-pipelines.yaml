@@ -57,7 +57,12 @@ stages:
         LOCK_ID=$(terraform workspace show | grep -oP '(?<=ID: ).*')
         if [ -n "$LOCK_ID" ]; then
           echo "State is locked. Attempting to unlock..."
-          terraform force-unlock $LOCK_ID || echo "Failed to unlock state. Please check manually."
+          for i in {1..5}; do  # Retry up to 5 times
+            terraform force-unlock $LOCK_ID && break || {
+              echo "Failed to unlock state. Retrying in 10 seconds..."
+              sleep 10
+            }
+          done
         else
           echo "No lock found."
         fi
