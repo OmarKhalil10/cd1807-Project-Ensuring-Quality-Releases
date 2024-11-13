@@ -48,11 +48,8 @@ stages:
         backendAzureRmResourceGroupName: 'Azuredevops'
         backendAzureRmStorageAccountName: 'tfstate103417257'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: '$(terraformBackendKey)'  # Use a secret variable here
-        backendAzureRmTenantId: '$(tenant_id)'  # Add your tenant ID
-        backendAzureRmClientId: '$(client-id)'    # Add your Service Principal client ID
-        backendAzureRmClientSecret: '$(client-secret)'  # Use a secret variable for the client secret
-
+        backendAzureRmKey: 'test.terraform.tfstate'
+    
     # Run Terraform validate on the pipeline agent 
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
       displayName: Terraform validate
