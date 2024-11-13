@@ -47,7 +47,7 @@ stages:
         backendAzureRmResourceGroupName: 'Azuredevops'
         backendAzureRmStorageAccountName: 'tfstate103417257'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: 'terraform.tfstate'
+        backendAzureRmKey: '$(terraformBackendKey)'
     - task: ms-devlabs.custom-terraform-tasks.custom-terraform-release-task.TerraformTaskV3@3
       displayName: Terraform validate
       inputs:
