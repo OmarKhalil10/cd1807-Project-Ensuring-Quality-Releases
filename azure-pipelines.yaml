@@ -93,21 +93,24 @@ stages:
     #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     #--------------------------------------------#   
-
-    #--------------------------------------------#    
     # Install Node.js
     - task: NodeTool@0
       displayName: 'Install Node.js'
       inputs:
         versionSource: 'spec'
-        versionSpec: '6.x'
+        versionSpec: '16.x'  # Use a modern version of Node.js
 
-    # Postman - Install Newman    
-    # ToDo: Update the command and verify the working directory
+    # Verify npm installation
+    - task: CmdLine@2
+      displayName: Verify npm
+      inputs:
+        script: 'npm --version'
+
+    # Install Newman
     - task: CmdLine@2
       displayName: Install Newman
       inputs:
-        script: 'sudo npm install -g newman'
+        script: 'npm install -g newman'
         workingDirectory: $(System.DefaultWorkingDirectory)
         
     # Postman Data Validation Test Suite    
