@@ -1,0 +1,21 @@
+{
+	"id": "environment-id",
+	"name": "Starter Environment",
+	"values": [
+		{
+			"key": "baseUrl",
+			"value": "https://fakerestapi.azurewebsites.net",
+			"enabled": true
+		},
+		{
+			"key": "firstName",
+			"value": "TestFirstName",
+		"enabled": true
+		},
+		{
+			"key": "lastName",
+			"value": "TestLastName",
+			"enabled": true
+		}
+	]
+}
