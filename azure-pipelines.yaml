@@ -100,6 +100,7 @@ stages:
       inputs:
         script: 'sudo npm install -g newman'
         workingDirectory: $(System.DefaultWorkingDirectory)
+        
     # Postman Data Validation Test Suite    
     # ToDo: Verify the working directory
     - task: CmdLine@2
