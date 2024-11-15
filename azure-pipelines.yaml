@@ -280,7 +280,6 @@ stages:
                 sudo apt-get install python3-pip -y
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser
-                pip3 install selenium
 
                 # Set up app directory
                 cd ~/
@@ -306,7 +305,13 @@ stages:
 
                 # Add chromedriver to PATH
                 export PATH=$PATH:/home/testuser/app
+                # Make virtual environment
+                python3 -m venv venv
+                source venv/bin/activate
 
+                # Install selenium
+                pip3 install selenium
+                
                 # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
                 python3 add_remove_from_cart.py >> selenium.log
