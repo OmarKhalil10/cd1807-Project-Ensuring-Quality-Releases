@@ -193,7 +193,7 @@ stages:
   # ToDo: Provide <environment name> you created in your DevOps project
   - deployment: FakeRestAPI
     pool: myAgentPool
-      # vmImage: 'Ubuntu-18.04'      
+    # vmImage: 'Ubuntu-18.04'      
     environment: "$(environmentName)"
     strategy:
       runOnce:
@@ -212,50 +212,12 @@ stages:
             displayName: Run JMeter Test Suite
             inputs:
               script: |
-                # Update package list and install required packages
-                apt-get update
-                apt install -y curl zip default-jre default-jdk
-
-                # Download JMeter from the official Apache mirror
-                JMETER_VERSION="5.2.1"
-                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz" -O apache-jmeter.tgz
-
-                # Check if the download was successful
-                if [ $? -ne 0 ]; then
-                  echo "JMeter download failed!"
-                  exit 1
-                fi
-
-                # Extract the JMeter archive
-                tar -xf apache-jmeter.tgz
-                JMETER_HOME="./apache-jmeter-${JMETER_VERSION}"
-
-                # Unzip the performance tests package
+                wget "https://apache.mirrors.lucidnetworks.net//jmeter/binaries/apache-jmeter-5.2.1.tgz"
+                tar -xf apache-jmeter-5.2.1.tgz
                 unzip -o $(Build.BuildId)-perftests.zip
-
-                # Run JMeter test suites
-                ${JMETER_HOME}/bin/jmeter -n -t PerformanceTestSuite.jmx -l PerformanceTestSuite.jtl -e -o PerformanceTestSuiteReport
-                ${JMETER_HOME}/bin/jmeter -n -t StressTest.jmx -l StressTest.jtl -e -o StressTestReport
-                ${JMETER_HOME}/bin/jmeter -n -t EnduranceTest.jmx -l EnduranceTest.jtl -e -o EnduranceTestReport
-
-                # Display logs from test runs
-                echo "JMeter Performance test log file"
-                cat PerformanceTestSuite.jtl
-                echo "JMeter Stress test log file"
-                cat StressTest.jtl
-                echo "JMeter Endurance test log file"
-                cat EnduranceTest.jtl
+                ./apache-jmeter-5.2.1/bin/jmeter -n -t PerformanceTestSuite.jmx -j jmeter.log -f
+                cat jmeter.log    
               workingDirectory: $(Pipeline.Workspace)/drop-perftests
-
-          # Archive the JMeter log files
-          - task: ArchiveFiles@2
-            displayName: Get JMeter Log
-            inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter"
-              includeRootFolder: false
-              archiveType: "zip"
-              archiveFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter-$(Build.BuildId).zip"
-              verbose: true
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
