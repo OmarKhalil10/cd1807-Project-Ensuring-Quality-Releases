@@ -278,13 +278,23 @@ stages:
                 # Exit if any command fails
                 set -e
 
-                # Update and upgrade system packages
                 echo "Updating package lists and upgrading installed packages..."
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
 
                 # Install necessary packages
-                sudo apt-get install -y python3-venv unzip chromium-browser chromium-chromedriver
+                echo "Installing required packages..."
+                sudo apt-get install -y python3-venv unzip chromium-browser chromium-chromedriver wget
+
+                # Fetch the Chromium version number
+                CHROMIUM_VERSION=$(chromium-browser --version | grep -o '[0-9]*\.[0-9]*\.[0-9]*')
+
+                # Download ChromeDriver that matches the Chromium version
+                echo "Downloading ChromeDriver for Chromium version $CHROMIUM_VERSION..."
+                wget "http://chromedriver.storage.googleapis.com/$CHROMIUM_VERSION/chromedriver_linux64.zip" -O chromedriver_linux64.zip
+                unzip -o chromedriver_linux64.zip
+                sudo mv chromedriver /usr/local/bin/
+                sudo chmod +x /usr/local/bin/chromedriver
 
                 # Create a Python virtual environment
                 echo "Creating a Python virtual environment..."
@@ -292,7 +302,8 @@ stages:
                 python3 -m venv "$VENV_DIR"
                 source "$VENV_DIR/bin/activate"
 
-                # Upgrade pip in the virtual environment
+                # Upgrade pip and install necessary Python packages
+                echo "Upgrading pip and installing selenium..."
                 pip install --upgrade pip
                 pip install selenium
 
@@ -311,21 +322,6 @@ stages:
                 else
                     echo "Error: ZIP file $ZIP_FILE not found."
                     exit 1
-                fi
-
-                # Download and set up ChromeDriver if not already present
-                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
-                if [ ! -f "$CHROMEDRIVER_ZIP" ]; then
-                    echo "Downloading the latest ChromeDriver..."
-                    LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-                    wget "http://chromedriver.storage.googleapis.com/$LATEST/$CHROMEDRIVER_ZIP"
-                    unzip -o "$CHROMEDRIVER_ZIP"
-                fi
-
-                # Create symbolic link for ChromeDriver
-                if [ ! -L /usr/local/bin/chromedriver ]; then
-                    echo "Creating symbolic link for ChromeDriver..."
-                    sudo ln -s "$PWD/chromedriver" /usr/local/bin/chromedriver
                 fi
 
                 # Run the test script and log output
