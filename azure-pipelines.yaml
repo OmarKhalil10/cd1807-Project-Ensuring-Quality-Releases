@@ -17,7 +17,7 @@ variables:
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
   # Environment name
-  environmentName: 'test-vm'
+  environmentName: 'test'
 
 stages:
 #--------------------------------------------#  
@@ -46,7 +46,7 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
         backendAzureRmResourceGroupName: 'Azuredevops'
-        backendAzureRmStorageAccountName: 'tfstate2539721075'
+        backendAzureRmStorageAccountName: 'tfstate3108332398'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: "$(access_key)"
     
@@ -203,48 +203,53 @@ stages:
             displayName: 'Deploy Azure Web App'
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
-              appName: 'myApplication-AppService-7935e6b82c480971'
+              appName: 'udacity-fakerestapi'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'  # Use the published zip artifact
           #--------------------------------------------#    
           # Run JMeter test suite against the App Service
           - task: CmdLine@2
-            displayName: Run JMeter Performance Tests
+            displayName: Run JMeter Test Suite
             inputs:
               script: |
                 # Update package list and install required packages
-                sudo apt-get update
-                sudo apt install -y curl zip default-jre default-jdk
+                apt-get update
+                apt install -y curl zip default-jre default-jdk
 
-                # Download and extract Apache JMeter
-                JMETER_VERSION="5.6.2"
-                JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
-                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}"
-                tar -xf ${JMETER_TGZ}
+                # Download JMeter from the official Apache mirror
+                JMETER_VERSION="5.2.1"
+                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz" -O apache-jmeter.tgz
 
-                # Unzip performance test files
-                unzip -o "$(Build.BuildId)-perftests.zip"
+                # Check if the download was successful
+                if [ $? -ne 0 ]; then
+                  echo "JMeter download failed!"
+                  exit 1
+                fi
 
-                # Run JMeter test suites and save logs
-                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="log/jmeter"
+                # Extract the JMeter archive
+                tar -xf apache-jmeter.tgz
+                JMETER_HOME="./apache-jmeter-${JMETER_VERSION}"
 
-                mkdir -p ${LOG_DIR}/stress-test ${LOG_DIR}/endurance-test
+                # Unzip the performance tests package
+                unzip -o $(Build.BuildId)-perftests.zip
 
-                ${JMETER_DIR}/jmeter -n -t stress-test.jmx -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
-                ${JMETER_DIR}/jmeter -n -t endurance-test.jmx -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+                # Run JMeter test suites
+                ${JMETER_HOME}/bin/jmeter -n -t PerformanceTestSuite.jmx -l PerformanceTestSuite.jtl -e -o PerformanceTestSuiteReport
+                ${JMETER_HOME}/bin/jmeter -n -t StressTest.jmx -l StressTest.jtl -e -o StressTestReport
+                ${JMETER_HOME}/bin/jmeter -n -t EnduranceTest.jmx -l EnduranceTest.jtl -e -o EnduranceTestReport
 
-                # Display JMeter logs
-                echo "JMETER LOG STRESS TEST"
-                cat ${LOG_DIR}/stress-test/jmeter.log
+                # Display logs from test runs
+                echo "JMeter Performance test log file"
+                cat PerformanceTestSuite.jtl
+                echo "JMeter Stress test log file"
+                cat StressTest.jtl
+                echo "JMeter Endurance test log file"
+                cat EnduranceTest.jtl
+              workingDirectory: $(Pipeline.Workspace)/drop-perftests
 
-                echo "JMETER LOG ENDURANCE TEST"
-                cat ${LOG_DIR}/endurance-test/jmeter.log
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests # Ensure this path matches your artifact location
-
-          # Archive JMeter logs
+          # Archive the JMeter log files
           - task: ArchiveFiles@2
-            displayName: Archive JMeter Log Files
+            displayName: Get JMeter Log
             inputs:
               rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter"
               includeRootFolder: false
@@ -258,16 +263,16 @@ stages:
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: $(environmentName)        # ToDo: Change/provide a name
+      name: "$(environmentName)"       # ToDo: Change/provide a name
       resourceType: VirtualMachine
-      tags: web
+      tags: selenium
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current
-            artifact: drop-uitests
-
+            artifact: drop-uitests     # ToDo: Change/provide a name
+            
           - task: Bash@3
             inputs:
               targetType: 'inline'
