@@ -1,66 +1,76 @@
-#!/usr/bin/env python
+# main.py
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.common.by import By
-import time
-from login import login_to_saucedemo
+import datetime
+from login import login
 
-def main():
-    print("Initializing the Chrome browser...")
-    driver = webdriver.Chrome()
+# Start the browser and perform the test
+def start():
+    print(timestamp() + 'Starting Chrome...')
+    
+    # Options for headless execution
+    options = ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--remote-debugging-port=9222")
+    
+    driver = webdriver.Chrome(options=options)
 
+    # Perform login
+    if login(driver, 'standard_user', 'secret_sauce'):
+        # Add items to the cart
+        add_cart(driver)
+        
+        # Remove items from the cart
+        remove_cart(driver)
+
+    driver.quit()
+    print(timestamp() + 'Browser closed.')
+
+# Add items to the cart
+def add_cart(driver):
     try:
-        # Perform login
-        if not login_to_saucedemo(driver):
-            print("Exiting test due to login failure.")
-            driver.quit()
-            return
+        print(timestamp() + 'Adding products to the cart...')
+        product_elements = driver.find_elements(By.CSS_SELECTOR, ".inventory_item")
 
-        # Add all products to the cart
-        print("Adding all products to the cart...")
-        products = driver.find_elements(By.CSS_SELECTOR, '.btn_primary.btn_inventory')
-        for product in products:
-            product.click()
-            print("Product added to cart.")
+        for product in product_elements:
+            product_name = product.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
+            product.find_element(By.CSS_SELECTOR, ".btn_inventory").click()
+            print(timestamp() + f"Product '{product_name}' added to the cart.")
 
-        # Validate that all products are added to the cart
-        cart_icon = driver.find_element(By.CSS_SELECTOR, '.shopping_cart_link')
-        cart_count = cart_icon.text
-        print(f'Number of items in the cart: {cart_count}')
+        cart_count = int(driver.find_element(By.CSS_SELECTOR, ".shopping_cart_badge").text)
+        assert cart_count == len(product_elements), 'The cart count is incorrect.'
+        print(timestamp() + 'All products added successfully. Cart count = ' + str(cart_count))
+    
+    except Exception as e:
+        print(timestamp() + f'Error while adding products: {e}')
 
-        # Assert that the cart count is correct
-        assert cart_count == str(len(products)), "Test failed: The cart count does not match the number of products added."
+# Remove items from the cart
+def remove_cart(driver):
+    try:
+        print(timestamp() + 'Navigating to the cart page...')
+        driver.find_element(By.CSS_SELECTOR, ".shopping_cart_link").click()
 
-        print("All products added to the cart successfully!")
+        print(timestamp() + 'Removing all products from the cart...')
+        remove_buttons = driver.find_elements(By.CSS_SELECTOR, ".cart_button")
 
-        # Remove all products from the cart
-        print("Navigating to the cart...")
-        cart_icon.click()
-        time.sleep(2)  # Wait for the cart page to load
+        for remove in remove_buttons:
+            remove.click()
+            print(timestamp() + 'Product removed.')
 
-        remove_buttons = driver.find_elements(By.CSS_SELECTOR, '.btn_secondary.btn_inventory')
-        for remove_button in remove_buttons:
-            remove_button.click()
-            print("Product removed from cart.")
-
-        # Validate that the cart is empty
-        cart_icon.click()
-        time.sleep(2)  # Wait for the cart page to load
-        cart_count_after_removal = driver.find_element(By.CSS_SELECTOR, '.shopping_cart_badge').text if driver.find_elements(By.CSS_SELECTOR, '.shopping_cart_badge') else '0'
-        print(f'Number of items in the cart after removal: {cart_count_after_removal}')
-
-        assert cart_count_after_removal == '0', "Test failed: The cart is not empty after removal."
-
-        print("All products removed from the cart successfully!")
+        cart_count_element = driver.find_elements(By.CSS_SELECTOR, ".shopping_cart_badge")
+        assert len(cart_count_element) == 0, "Cart is not empty after removal."
+        print(timestamp() + 'All products removed successfully.')
 
     except Exception as e:
-        print(f"An error occurred: {e}")
-        print("Test failed.")
+        print(timestamp() + f'Error while removing products: {e}')
 
-    finally:
-        # Optional: Add some wait time to see the results before the browser closes
-        time.sleep(5)  # Wait for 5 seconds
-        print("Closing the browser...")
-        driver.quit()
+# Timestamp function
+def timestamp():
+    ts = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    return (ts + ' ')
 
 if __name__ == "__main__":
-    main()
+    start()
