@@ -209,47 +209,42 @@ stages:
           #--------------------------------------------#    
           # Run JMeter test suite against the App Service
           - task: CmdLine@2
-            displayName: Run JMeter Test Suite
+            displayName: Run JMeter Performance Tests
             inputs:
               script: |
                 # Update package list and install required packages
-                apt-get update
-                apt install -y curl zip default-jre default-jdk
+                sudo apt-get update
+                sudo apt install -y curl zip default-jre default-jdk
 
-                # Download JMeter from the official Apache mirror
-                JMETER_VERSION="5.2.1"
-                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz" -O apache-jmeter.tgz
+                # Download and extract Apache JMeter
+                JMETER_VERSION="5.6.2"
+                JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
+                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}"
+                tar -xf ${JMETER_TGZ}
 
-                # Check if the download was successful
-                if [ $? -ne 0 ]; then
-                  echo "JMeter download failed!"
-                  exit 1
-                fi
+                # Unzip performance test files
+                unzip -o "$(Build.BuildId)-perftests.zip"
 
-                # Extract the JMeter archive
-                tar -xf apache-jmeter.tgz
-                JMETER_HOME="./apache-jmeter-${JMETER_VERSION}"
+                # Run JMeter test suites and save logs
+                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
+                LOG_DIR="log/jmeter"
 
-                # Unzip the performance tests package
-                unzip -o $(Build.BuildId)-perftests.zip
+                mkdir -p ${LOG_DIR}/stress-test ${LOG_DIR}/endurance-test
 
-                # Run JMeter test suites
-                ${JMETER_HOME}/bin/jmeter -n -t PerformanceTestSuite.jmx -l PerformanceTestSuite.jtl -e -o PerformanceTestSuiteReport
-                ${JMETER_HOME}/bin/jmeter -n -t StressTest.jmx -l StressTest.jtl -e -o StressTestReport
-                ${JMETER_HOME}/bin/jmeter -n -t EnduranceTest.jmx -l EnduranceTest.jtl -e -o EnduranceTestReport
+                ${JMETER_DIR}/jmeter -n -t stress-test.jmx -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t endurance-test.jmx -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
 
-                # Display logs from test runs
-                echo "JMeter Performance test log file"
-                cat PerformanceTestSuite.jtl
-                echo "JMeter Stress test log file"
-                cat StressTest.jtl
-                echo "JMeter Endurance test log file"
-                cat EnduranceTest.jtl
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests
+                # Display JMeter logs
+                echo "JMETER LOG STRESS TEST"
+                cat ${LOG_DIR}/stress-test/jmeter.log
 
-          # Archive the JMeter log files
+                echo "JMETER LOG ENDURANCE TEST"
+                cat ${LOG_DIR}/endurance-test/jmeter.log
+              workingDirectory: $(Pipeline.Workspace)/drop-perftests # Ensure this path matches your artifact location
+
+          # Archive JMeter logs
           - task: ArchiveFiles@2
-            displayName: Get JMeter Log
+            displayName: Archive JMeter Log Files
             inputs:
               rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter"
               includeRootFolder: false
@@ -265,7 +260,7 @@ stages:
     environment:
       name: "$(environmentName)"       # ToDo: Change/provide a name
       resourceType: VirtualMachine
-      tags: selenium
+      tags: web
     strategy:
       runOnce:
         deploy:
