@@ -294,13 +294,21 @@ stages:
                 # Create app directory if it doesn't exist
                 DIR=/home/testuser/app
                 if [ ! -d "$DIR" ]; then
+                    echo "Creating directory $DIR..."
                     mkdir -p $DIR
                 fi
 
                 # Move and unzip the downloaded tests
-                mv /home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip $DIR
-                cd $DIR
-                unzip -o $(Build.BuildId)-uitests.zip
+                ZIP_FILE="/home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip"
+                if [ -f "$ZIP_FILE" ]; then
+                    echo "Moving and unzipping $ZIP_FILE..."
+                    mv "$ZIP_FILE" "$DIR"
+                    cd "$DIR"
+                    unzip -o "$(Build.BuildId)-uitests.zip"
+                else
+                    echo "Error: ZIP file $ZIP_FILE not found."
+                    exit 1
+                fi
 
                 # Download and set up ChromeDriver
                 CHROMEDRIVER_ZIP=chromedriver_linux64.zip
@@ -320,12 +328,12 @@ stages:
                 echo "Starting Selenium Tests"
                 
                 # Ensure the script exists before running
-                if [ -f "$DIR/add_remove_from_cart.py" ]; then
-                    python3 add_remove_from_cart.py >> selenium.log
+                TEST_SCRIPT="$DIR/add_remove_from_cart.py"
+                if [ -f "$TEST_SCRIPT" ]; then
+                    python3 "$TEST_SCRIPT" >> selenium.log
                 else
                     echo "Error: add_remove_from_cart.py not found in $DIR"
                     exit 1
                 fi
 
                 echo "Completed Selenium Tests. Check selenium.log for results."
-                  
