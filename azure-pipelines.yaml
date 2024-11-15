@@ -254,11 +254,10 @@ stages:
 
   #--------------------------------------------#
   # Selenium | Functional UI Tests
-  # ToDo: 
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: "$(environmentName)"       # ToDo: Change/provide a name
+      name: "$(environmentName)"  # ToDo: Update environment name
       resourceType: VirtualMachine
       tags: web
     strategy:
@@ -267,73 +266,77 @@ stages:
           steps:
           - download: current
             name: "Download_Tests"
-            artifact: drop-uitests     # ToDo: Change/provide a name
-            
+            artifact: drop-uitests  # ToDo: Update artifact name if needed
+
           - task: Bash@3
+            displayName: Run Selenium Tests
             inputs:
               targetType: 'inline'
-              script: |           
-                #! /bin/bash
-                
-                # Update package lists and upgrade installed packages
+              script: |
+                #!/bin/bash
+
+                # Exit if any command fails
+                set -e
+
+                # Update and upgrade system packages
+                echo "Updating package lists and upgrading installed packages..."
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
 
                 # Install necessary packages
-                if ! dpkg -l | grep -q python3-pip; then
-                    echo "Installing python3-pip..."
-                    sudo apt-get install python3-pip -y
-                else
-                    echo "python3-pip is already installed."
-                fi
+                sudo apt-get install -y python3-venv unzip chromium-browser chromium-chromedriver
 
-                sudo apt-get install unzip -y
-                sudo apt-get install -y chromium-browser
-                pip3 install --upgrade selenium
+                # Create a Python virtual environment
+                echo "Creating a Python virtual environment..."
+                VENV_DIR="/home/$(whoami)/selenium_env"
+                python3 -m venv "$VENV_DIR"
+                source "$VENV_DIR/bin/activate"
 
-                # Create app directory if it doesn't exist
-                DIR=/home/testuser/app
-                if [ ! -d "$DIR" ]; then
-                    echo "Creating directory $DIR..."
-                    mkdir -p $DIR
-                fi
+                # Upgrade pip in the virtual environment
+                pip install --upgrade pip
+                pip install selenium
 
-                # Move and unzip the downloaded tests
-                ZIP_FILE="/home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip"
+                # Set up the working directory
+                APP_DIR="/home/$(whoami)/app"
+                echo "Ensuring directory $APP_DIR exists..."
+                mkdir -p "$APP_DIR"
+
+                # Move and unzip test files
+                ZIP_FILE="$(Pipeline.Workspace)/drop-uitests/$(Build.BuildId)-uitests.zip"
                 if [ -f "$ZIP_FILE" ]; then
-                    echo "Moving and unzipping $ZIP_FILE..."
-                    mv "$ZIP_FILE" "$DIR"
-                    cd "$DIR"
+                    echo "Moving and unzipping $ZIP_FILE to $APP_DIR..."
+                    mv "$ZIP_FILE" "$APP_DIR"
+                    cd "$APP_DIR"
                     unzip -o "$(Build.BuildId)-uitests.zip"
                 else
                     echo "Error: ZIP file $ZIP_FILE not found."
                     exit 1
                 fi
 
-                # Download and set up ChromeDriver
-                CHROMEDRIVER_ZIP=chromedriver_linux64.zip
+                # Download and set up ChromeDriver if not already present
+                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
                 if [ ! -f "$CHROMEDRIVER_ZIP" ]; then
+                    echo "Downloading the latest ChromeDriver..."
                     LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-                    wget http://chromedriver.storage.googleapis.com/$LATEST/$CHROMEDRIVER_ZIP
-                    unzip -o $CHROMEDRIVER_ZIP
+                    wget "http://chromedriver.storage.googleapis.com/$LATEST/$CHROMEDRIVER_ZIP"
+                    unzip -o "$CHROMEDRIVER_ZIP"
                 fi
 
-                # Create symbolic link if it doesn't exist
+                # Create symbolic link for ChromeDriver
                 if [ ! -L /usr/local/bin/chromedriver ]; then
-                    sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
+                    echo "Creating symbolic link for ChromeDriver..."
+                    sudo ln -s "$PWD/chromedriver" /usr/local/bin/chromedriver
                 fi
 
-                # Set PATH
-                export PATH=$PATH:$DIR
-                echo "Starting Selenium Tests"
-                
-                # Ensure the script exists before running
-                TEST_SCRIPT="$DIR/add_remove_from_cart.py"
+                # Run the test script and log output
+                TEST_SCRIPT="$APP_DIR/add_remove_from_cart.py"
+                LOG_FILE="$APP_DIR/selenium.log"
                 if [ -f "$TEST_SCRIPT" ]; then
-                    python3 "$TEST_SCRIPT" >> selenium.log
+                    echo "Starting Selenium Tests with $TEST_SCRIPT..."
+                    python3 "$TEST_SCRIPT" | tee -a "$LOG_FILE"
                 else
-                    echo "Error: add_remove_from_cart.py not found in $DIR"
+                    echo "Error: Test script $TEST_SCRIPT not found."
                     exit 1
                 fi
 
-                echo "Completed Selenium Tests. Check selenium.log for results."
+                echo "Selenium Tests completed. Check $LOG_FILE for results."
