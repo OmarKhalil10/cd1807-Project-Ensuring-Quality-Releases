@@ -252,63 +252,49 @@ stages:
               archiveFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter-$(Build.BuildId).zip"
               verbose: true
 
-  #--------------------------------------------#
+  #--------------------------------------------#  
   # Selenium | Functional UI Tests
+  # ToDo: 
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: $(environmentName)
+      name: $(environmentName)        # ToDo: Change/provide a name
       resourceType: VirtualMachine
       tags: web
     strategy:
       runOnce:
         deploy:
           steps:
-            - download: current
-              artifact: drop-uitests  # Ensure this is the correct name of your artifact
-
-            - task: Bash@3
-              inputs:
-                targetType: 'inline'
-                script: |
-                  #! /bin/bash
-                  
-                  # Update and install dependencies
-                  sudo apt-get update -y
-                  sudo apt-get upgrade -y
-                  sudo apt-get install python3-pip -y
-                  sudo apt-get install unzip -y
-                  sudo apt-get install chromium-browser -y
-                  
-                  # Install Python dependencies
-                  pip3 install selenium
-                  
-                  # Prepare the directory and unzip test artifacts
-                  DIR=/home/testuser/app
-                  if [ ! -d "$DIR" ]; then
-                      mkdir $DIR
-                  fi
-                  
-                  mv $(Pipeline.Workspace)/drop-ui-tests/$(Build.BuildId)-uitests.zip $DIR
-                  cd $DIR
-                  unzip -o $(Build.BuildId)-uitests.zip
-
-                  # Check for chromedriver and download if missing
-                  CHROMEDRIVER_PATH=/home/testuser/app/chromedriver_linux64.zip
-                  if [ ! -f "$CHROMEDRIVER_PATH" ]; then
-                      LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-                      wget http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
-                      unzip -o chromedriver_linux64.zip
-                      sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
-                  fi
-                  
-                  # Add chromedriver to PATH
-                  export PATH=$PATH:/home/testuser/app
-
-                  # Run Selenium Tests
-                  echo "Starting Selenium Tests"
-                  python3 add_remove_from_cart.py >> selenium.log
-                  echo "Completed Selenium Tests. Check selenium.log for results."
-
-                  # Save logs
-                  sudo cp selenium.log /var/log/selenium.log
+          - download: current
+            artifact: drop-ui-tests     # ToDo: Change/provide a name
+            
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |           
+                #! /bin/bash
+                
+                sudo apt-get upgrade -y
+                sudo apt-get install python3-pip -y
+                sudo apt-get install unzip -y
+                sudo apt-get install -y chromium-browser
+                pip3 install selenium
+                cd ~/
+                DIR=/home/testuser/app
+                if [ ! -d "$DIR" ]; then
+                    mkdir app
+                fi
+                mv /home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
+                cd app
+                unzip -o $(Build.BuildId)-uitests.zip
+                FILE=/home/testuser/app/chromedriver_linux64.zip
+                if [ ! -f "$FILE" ]; then
+                    LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
+                    wget http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
+                    unzip -o chromedriver_linux64.zip
+                    sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
+                fi
+                export PATH=$PATH:/home/testuser/app
+                echo "Starting Selenium Tests"
+                python3 add_remove_from_cart.py >> selenium.log
+                echo "Completed Selenium Tests. Check selenium.log for results."
