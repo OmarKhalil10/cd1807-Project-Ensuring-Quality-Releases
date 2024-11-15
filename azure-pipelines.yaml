@@ -265,10 +265,8 @@ stages:
       runOnce:
         deploy:
           steps:
-          - task: DownloadBuildArtifacts@0
-            inputs:
-              artifactName: drop-uitests
-              downloadPath: $(Build.ArtifactStagingDirectory)
+          - download: current
+            artifact: drop-uitests
 
           - task: Bash@3
             inputs:
@@ -293,11 +291,13 @@ stages:
                 cd app
                 unzip -o $(Build.BuildId)-uitests.zip
 
-                # Download and set up Chromedriver
+                # Download the chromedriver version for the installed Chromium version (130.0.6723.116)
+                CHROME_VERSION="130.0.6723.116"
                 FILE=/home/testuser/app/chromedriver_linux64.zip
                 if [ ! -f "$FILE" ]; then
-                    LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-                    wget http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
+                    # Fetch the latest chromedriver version for Chrome 130
+                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_130")
+                    wget https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
                     unzip -o chromedriver_linux64.zip
                     sudo rm -f /usr/local/bin/chromedriver  # Remove existing symlink if it exists
                     sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
@@ -305,15 +305,15 @@ stages:
 
                 # Add chromedriver to PATH
                 export PATH=$PATH:/home/testuser/app
+
                 # Make virtual environment
                 python3 -m venv venv
                 source venv/bin/activate
 
                 # Install selenium
                 pip3 install selenium
-                
+
                 # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
                 python3 add_remove_from_cart.py >> selenium.log
                 echo "Completed Selenium Tests. Check selenium.log for results."
-
