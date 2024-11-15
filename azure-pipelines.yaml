@@ -203,7 +203,7 @@ stages:
             displayName: 'Deploy Azure Web App'
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
-              appName: 'udacity-fakerestapi'
+              appName: 'myApplication-AppService-7935e6b82c480971'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'  # Use the published zip artifact
           #--------------------------------------------#    
