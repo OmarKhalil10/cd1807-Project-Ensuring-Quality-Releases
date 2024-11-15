@@ -275,27 +275,57 @@ stages:
               script: |           
                 #! /bin/bash
                 
+                # Update package lists and upgrade installed packages
+                sudo apt-get update -y
                 sudo apt-get upgrade -y
-                sudo apt-get install python3-pip -y
+
+                # Install necessary packages
+                if ! dpkg -l | grep -q python3-pip; then
+                    echo "Installing python3-pip..."
+                    sudo apt-get install python3-pip -y
+                else
+                    echo "python3-pip is already installed."
+                fi
+
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser
-                pip3 install selenium
-                cd ~/
+                pip3 install --upgrade selenium
+
+                # Create app directory if it doesn't exist
                 DIR=/home/testuser/app
                 if [ ! -d "$DIR" ]; then
-                    mkdir app
+                    mkdir -p $DIR
                 fi
-                mv /home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
-                cd app
+
+                # Move and unzip the downloaded tests
+                mv /home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip $DIR
+                cd $DIR
                 unzip -o $(Build.BuildId)-uitests.zip
-                FILE=/home/testuser/app/chromedriver_linux64.zip
-                if [ ! -f "$FILE" ]; then
+
+                # Download and set up ChromeDriver
+                CHROMEDRIVER_ZIP=chromedriver_linux64.zip
+                if [ ! -f "$CHROMEDRIVER_ZIP" ]; then
                     LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-                    wget http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
-                    unzip -o chromedriver_linux64.zip
+                    wget http://chromedriver.storage.googleapis.com/$LATEST/$CHROMEDRIVER_ZIP
+                    unzip -o $CHROMEDRIVER_ZIP
+                fi
+
+                # Create symbolic link if it doesn't exist
+                if [ ! -L /usr/local/bin/chromedriver ]; then
                     sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
                 fi
-                export PATH=$PATH:/home/testuser/app
+
+                # Set PATH
+                export PATH=$PATH:$DIR
                 echo "Starting Selenium Tests"
-                python3 add_remove_from_cart.py >> selenium.log
+                
+                # Ensure the script exists before running
+                if [ -f "$DIR/add_remove_from_cart.py" ]; then
+                    python3 add_remove_from_cart.py >> selenium.log
+                else
+                    echo "Error: add_remove_from_cart.py not found in $DIR"
+                    exit 1
+                fi
+
                 echo "Completed Selenium Tests. Check selenium.log for results."
+                  
