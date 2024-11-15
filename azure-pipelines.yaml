@@ -257,94 +257,58 @@ stages:
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: "$(environmentName)"  # ToDo: Update environment name
+      name: $(environmentName)
       resourceType: VirtualMachine
       tags: web
     strategy:
       runOnce:
         deploy:
           steps:
-          - download: current
-            name: "Download_Tests"
-            artifact: drop-uitests  # ToDo: Update artifact name if needed
+            - download: current
+              artifact: drop-ui-tests  # Ensure this is the correct name of your artifact
 
-          - task: Bash@3
-            displayName: Run Selenium Tests
-            inputs:
-              targetType: 'inline'
-              script: |
-                #!/bin/bash
+            - task: Bash@3
+              inputs:
+                targetType: 'inline'
+                script: |
+                  #! /bin/bash
+                  
+                  # Update and install dependencies
+                  sudo apt-get update -y
+                  sudo apt-get upgrade -y
+                  sudo apt-get install python3-pip -y
+                  sudo apt-get install unzip -y
+                  sudo apt-get install chromium-browser -y
+                  
+                  # Install Python dependencies
+                  pip3 install selenium
+                  
+                  # Prepare the directory and unzip test artifacts
+                  DIR=/home/testuser/app
+                  if [ ! -d "$DIR" ]; then
+                      mkdir $DIR
+                  fi
+                  
+                  mv $(Pipeline.Workspace)/drop-ui-tests/$(Build.BuildId)-uitests.zip $DIR
+                  cd $DIR
+                  unzip -o $(Build.BuildId)-uitests.zip
 
-                # Exit if any command fails
-                set -e
+                  # Check for chromedriver and download if missing
+                  CHROMEDRIVER_PATH=/home/testuser/app/chromedriver_linux64.zip
+                  if [ ! -f "$CHROMEDRIVER_PATH" ]; then
+                      LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
+                      wget http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
+                      unzip -o chromedriver_linux64.zip
+                      sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
+                  fi
+                  
+                  # Add chromedriver to PATH
+                  export PATH=$PATH:/home/testuser/app
 
-                echo "Updating package lists and upgrading installed packages..."
-                sudo apt-get update -y
-                sudo apt-get upgrade -y
+                  # Run Selenium Tests
+                  echo "Starting Selenium Tests"
+                  python3 add_remove_from_cart.py >> selenium.log
+                  echo "Completed Selenium Tests. Check selenium.log for results."
 
-                # Install necessary packages
-                echo "Installing required packages..."
-                sudo apt-get install -y python3-venv unzip chromium-browser chromium-chromedriver wget
-
-                # Fetch the Chromium version number
-                CHROMIUM_VERSION=$(chromium-browser --version | grep -o '[0-9]*\.[0-9]*\.[0-9]*')
-
-                # Attempt to download ChromeDriver that matches the Chromium version
-                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
-                echo "Trying to download ChromeDriver for Chromium version $CHROMIUM_VERSION..."
-
-                # Try to download the correct ChromeDriver version
-                CHROMEDRIVER_URL="http://chromedriver.storage.googleapis.com/$CHROMIUM_VERSION/chromedriver_linux64.zip"
-                wget "$CHROMEDRIVER_URL" -O $CHROMEDRIVER_ZIP || {
-                    # Fallback to the most compatible version if the specific one is not found
-                    echo "ChromeDriver version for Chromium $CHROMIUM_VERSION not found. Trying the latest compatible version..."
-                    LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE_130)
-                    CHROMEDRIVER_URL="http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip"
-                    wget "$CHROMEDRIVER_URL" -O $CHROMEDRIVER_ZIP
-                }
-
-                # Unzip ChromeDriver and move it to the correct location
-                unzip -o $CHROMEDRIVER_ZIP
-                sudo mv chromedriver /usr/local/bin/
-                sudo chmod +x /usr/local/bin/chromedriver
-
-                # Create a Python virtual environment
-                echo "Creating a Python virtual environment..."
-                VENV_DIR="/home/$(whoami)/selenium_env"
-                python3 -m venv "$VENV_DIR"
-                source "$VENV_DIR/bin/activate"
-
-                # Upgrade pip and install necessary Python packages
-                echo "Upgrading pip and installing selenium..."
-                pip install --upgrade pip
-                pip install selenium
-
-                # Set up the working directory
-                APP_DIR="/home/$(whoami)/app"
-                echo "Ensuring directory $APP_DIR exists..."
-                mkdir -p "$APP_DIR"
-
-                # Move and unzip test files
-                ZIP_FILE="$(Pipeline.Workspace)/drop-uitests/$(Build.BuildId)-uitests.zip"
-                if [ -f "$ZIP_FILE" ]; then
-                    echo "Moving and unzipping $ZIP_FILE to $APP_DIR..."
-                    mv "$ZIP_FILE" "$APP_DIR"
-                    cd "$APP_DIR"
-                    unzip -o "$(Build.BuildId)-uitests.zip"
-                else
-                    echo "Error: ZIP file $ZIP_FILE not found."
-                    exit 1
-                fi
-
-                # Run the test script and log output
-                TEST_SCRIPT="$APP_DIR/add_remove_from_cart.py"
-                LOG_FILE="$APP_DIR/selenium.log"
-                if [ -f "$TEST_SCRIPT" ]; then
-                    echo "Starting Selenium Tests with $TEST_SCRIPT..."
-                    python3 "$TEST_SCRIPT" | tee -a "$LOG_FILE"
-                else
-                    echo "Error: Test script $TEST_SCRIPT not found."
-                    exit 1
-                fi
-
-                echo "Selenium Tests completed. Check $LOG_FILE for results."
+                  # Save logs
+                  sudo cp selenium.log /var/log/selenium.log
