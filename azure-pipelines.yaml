@@ -283,9 +283,16 @@ stages:
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser wget
 
-                # Install Selenium using a virtual environment to ensure proper isolation
-                python3 -m venv /home/testuser/venv  # Create a virtual environment
-                source /home/testuser/venv/bin/activate  # Activate the virtual environment
+                # Create a virtual environment if it doesn't exist
+                VENV_DIR="/home/testuser/venv"
+                if [ ! -d "$VENV_DIR" ]; then
+                    python3 -m venv $VENV_DIR  # Create a virtual environment
+                fi
+
+                # Activate the virtual environment
+                source $VENV_DIR/bin/activate  # Activate the virtual environment
+
+                # Upgrade pip and install selenium
                 pip install --upgrade pip  # Upgrade pip to the latest version
                 pip install selenium  # Install Selenium
 
@@ -316,6 +323,6 @@ stages:
 
                 # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
-                source /home/testuser/venv/bin/activate  # Ensure virtual environment is active
                 python3 add_remove_from_cart.py >> selenium.log
                 echo "Completed Selenium Tests. Check selenium.log for results."
+
