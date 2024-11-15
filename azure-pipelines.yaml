@@ -23,10 +23,10 @@ stages:
 #--------------------------------------------#  
 # BUILD STAGE
 #--------------------------------------------#    
-# - stage: Build
-#   jobs:
-#   - job: BuildInfrastructure
-#     steps:
+- stage: Build
+  jobs:
+  - job: BuildInfrastructure
+    steps:
 #     #--------------------------------------------#  
 #     # Use Terraform to create the Infrastructure      
 #     # Install Terraform on the pipeline agent 
@@ -139,20 +139,20 @@ stages:
 #         mergeTestResults: true
 #         testRunTitle: 'Postman Tests'
 
-#     #--------------------------------------------#
-#     # Selenium (UI) Test Suite - Archive the package  
-#     # "ArchiveFiles@2" picks up the web package and archives it.
-#     - task: ArchiveFiles@2
-#       displayName: 'Archive UI Tests'
-#       inputs:
-#         rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
-#         includeRootFolder: false
-#         archiveType: 'zip'
-#         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-uitests.zip'
-#     # Selenium Test Suite - Publish the package  
-#     - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-uitests.zip   # Same as the archiveFile artifact above. 
-#       displayName: 'Upload Package'
-#       artifact: drop-uitests
+    #--------------------------------------------#
+    # Selenium (UI) Test Suite - Archive the package  
+    # "ArchiveFiles@2" picks up the web package and archives it.
+    - task: ArchiveFiles@2
+      displayName: 'Archive UI Tests'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/selenium'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-uitests.zip'
+    # Selenium Test Suite - Publish the package  
+    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId)-uitests.zip   # Same as the archiveFile artifact above. 
+      displayName: 'Upload Package'
+      artifact: drop-uitests
 
 #     #--------------------------------------------#    
 #     # FakeRestAPI - Archive
