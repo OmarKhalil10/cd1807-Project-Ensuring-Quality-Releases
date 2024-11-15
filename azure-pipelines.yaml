@@ -275,7 +275,7 @@ stages:
               targetType: 'inline'
               script: |
                 #! /bin/bash
-                
+
                 # Update packages and install required tools
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
@@ -283,8 +283,11 @@ stages:
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser wget
 
-                # Install Selenium
-                pip3 install selenium
+                # Install Selenium using a virtual environment to ensure proper isolation
+                python3 -m venv /home/testuser/venv  # Create a virtual environment
+                source /home/testuser/venv/bin/activate  # Activate the virtual environment
+                pip install --upgrade pip  # Upgrade pip to the latest version
+                pip install selenium  # Install Selenium
 
                 # Set up app directory
                 cd ~/
@@ -311,7 +314,8 @@ stages:
                 # Add chromedriver to PATH
                 export PATH=$PATH:/home/testuser/app
 
-                # Starting Selenium tests
+                # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
+                source /home/testuser/venv/bin/activate  # Ensure virtual environment is active
                 python3 add_remove_from_cart.py >> selenium.log
                 echo "Completed Selenium Tests. Check selenium.log for results."
