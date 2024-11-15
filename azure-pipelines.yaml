@@ -276,6 +276,8 @@ stages:
               script: |
                 #! /bin/bash
 
+                echo "Starting package updates and installations..."
+
                 # Update packages and install required tools
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
@@ -283,31 +285,49 @@ stages:
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser wget
 
+                echo "Creating virtual environment if it doesn't exist..."
                 # Create a virtual environment if it doesn't exist
                 VENV_DIR="/home/testuser/venv"
                 if [ ! -d "$VENV_DIR" ]; then
                     python3 -m venv $VENV_DIR  # Create a virtual environment
+                    echo "Virtual environment created at $VENV_DIR"
+                else
+                    echo "Virtual environment already exists."
                 fi
 
+                echo "Activating the virtual environment..."
                 # Activate the virtual environment
                 source $VENV_DIR/bin/activate  # Activate the virtual environment
 
+                echo "Virtual environment activated."
+                echo "Checking Python version..."
+                python --version  # Check Python version to confirm virtual environment is active
+
+                echo "Upgrading pip and installing Selenium..."
                 # Upgrade pip and install selenium
                 pip install --upgrade pip  # Upgrade pip to the latest version
                 pip install selenium  # Install Selenium
+                echo "Selenium installed successfully."
 
-                # Set up app directory
-                cd ~/
+                echo "Setting up app directory..."
+                # Set up app directory (only create if it doesn't exist)
                 DIR=/home/testuser/app
                 if [ ! -d "$DIR" ]; then
                     mkdir app
                 fi
 
-                # Move the artifact and unzip
-                mv /home/testuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
-                cd app
-                unzip -o $(Build.BuildId)-uitests.zip
+                # Check if the artifact exists, then move and unzip
+                ARTIFACT_PATH="/home/testuser/azagent/_work/1/drop-uitests/23-uitests.zip"
+                if [ -f "$ARTIFACT_PATH" ]; then
+                    mv $ARTIFACT_PATH $DIR
+                    cd $DIR
+                    unzip -o 23-uitests.zip
+                else
+                    echo "Error: File 23-uitests.zip not found."
+                    exit 1
+                fi
 
+                echo "Downloading and setting up Chromedriver..."
                 # Download and set up Chromedriver
                 FILE=/home/testuser/app/chromedriver_linux64.zip
                 if [ ! -f "$FILE" ]; then
@@ -321,8 +341,7 @@ stages:
                 # Add chromedriver to PATH
                 export PATH=$PATH:/home/testuser/app
 
-                # Starting Selenium tests using the virtual environment's Python
-                echo "Starting Selenium Tests"
+                echo "Starting Selenium tests using the virtual environment's Python..."
+                # Run Selenium tests with virtual environment's Python
                 python3 add_remove_from_cart.py >> selenium.log
                 echo "Completed Selenium Tests. Check selenium.log for results."
-
