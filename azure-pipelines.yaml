@@ -289,10 +289,22 @@ stages:
                 # Fetch the Chromium version number
                 CHROMIUM_VERSION=$(chromium-browser --version | grep -o '[0-9]*\.[0-9]*\.[0-9]*')
 
-                # Download ChromeDriver that matches the Chromium version
-                echo "Downloading ChromeDriver for Chromium version $CHROMIUM_VERSION..."
-                wget "http://chromedriver.storage.googleapis.com/$CHROMIUM_VERSION/chromedriver_linux64.zip" -O chromedriver_linux64.zip
-                unzip -o chromedriver_linux64.zip
+                # Attempt to download ChromeDriver that matches the Chromium version
+                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
+                echo "Trying to download ChromeDriver for Chromium version $CHROMIUM_VERSION..."
+
+                # Try to download the correct ChromeDriver version
+                CHROMEDRIVER_URL="http://chromedriver.storage.googleapis.com/$CHROMIUM_VERSION/chromedriver_linux64.zip"
+                wget "$CHROMEDRIVER_URL" -O $CHROMEDRIVER_ZIP || {
+                    # Fallback to the most compatible version if the specific one is not found
+                    echo "ChromeDriver version for Chromium $CHROMIUM_VERSION not found. Trying the latest compatible version..."
+                    LATEST=$(wget -q -O - http://chromedriver.storage.googleapis.com/LATEST_RELEASE_130)
+                    CHROMEDRIVER_URL="http://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip"
+                    wget "$CHROMEDRIVER_URL" -O $CHROMEDRIVER_ZIP
+                }
+
+                # Unzip ChromeDriver and move it to the correct location
+                unzip -o $CHROMEDRIVER_ZIP
                 sudo mv chromedriver /usr/local/bin/
                 sudo chmod +x /usr/local/bin/chromedriver
 
