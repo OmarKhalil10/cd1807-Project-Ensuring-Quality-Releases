@@ -206,18 +206,52 @@ stages:
               appName: 'myApplication-AppService-7935e6b82c480971'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'  # Use the published zip artifact
-          #--------------------------------------------#    
+
+          #-------------------------------------------------#
           # Run JMeter test suite against the App Service
           - task: CmdLine@2
-            displayName: Run JMeter Test Suite
+            displayName: Run JMeter Performance Tests
             inputs:
               script: |
-                wget "https://apache.mirrors.lucidnetworks.net//jmeter/binaries/apache-jmeter-5.2.1.tgz"
-                tar -xf apache-jmeter-5.2.1.tgz
-                unzip -o $(Build.BuildId)-perftests.zip
-                ./apache-jmeter-5.2.1/bin/jmeter -n -t PerformanceTestSuite.jmx -j jmeter.log -f
-                cat jmeter.log    
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests
+                # Update package list and install required packages
+                sudo apt-get update
+                sudo apt install -y curl zip default-jre default-jdk
+
+                # Download and extract Apache JMeter
+                JMETER_VERSION="5.6.2"
+                JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
+                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}"
+                tar -xf ${JMETER_TGZ}
+
+                # Unzip performance test files
+                unzip -o "$(Build.BuildId)-perftests.zip"
+
+                # Run JMeter test suites and save logs
+                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
+                LOG_DIR="log/jmeter"
+
+                mkdir -p ${LOG_DIR}/stress-test ${LOG_DIR}/endurance-test
+
+                ${JMETER_DIR}/jmeter -n -t stress-test.jmx -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t endurance-test.jmx -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+
+                # Display JMeter logs
+                echo "JMETER LOG STRESS TEST"
+                cat ${LOG_DIR}/stress-test/jmeter.log
+
+                echo "JMETER LOG ENDURANCE TEST"
+                cat ${LOG_DIR}/endurance-test/jmeter.log
+              workingDirectory: $(Pipeline.Workspace)/drop-perftests # Ensure this path matches your artifact location
+
+          # Archive JMeter logs
+          - task: ArchiveFiles@2
+            displayName: Archive JMeter Log Files
+            inputs:
+              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter"
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter-$(Build.BuildId).zip"
+              verbose: true
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
