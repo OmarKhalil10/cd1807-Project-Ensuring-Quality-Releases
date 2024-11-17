@@ -207,7 +207,7 @@ stages:
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
 
           #-------------------------------------------------#
-          # Run JMeter test suite against the App Service
+          # Run Endurance Test with JMeter
           - task: CmdLine@2
             displayName: Run Endurance Test with JMeter
             inputs:
@@ -224,29 +224,40 @@ stages:
                 tar -xf ${JMETER_TGZ}
                 
                 # Unzip performance test files from artifact
-                unzip -o "$(Pipeline.Workspace)/drop-perftests/$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
+                unzip -o "$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
                 
+                # Verify that the files are extracted
+                ls -l "$(Pipeline.Workspace)/drop-perftests"
+                echo "Checking for test_data.csv file..."
+                if [ -f "$(Pipeline.Workspace)/drop-perftests/test_data.csv" ]; then
+                  echo "test_data.csv found"
+                else
+                  echo "test_data.csv NOT found"
+                  exit 1
+                fi
+
                 # Set JMeter directory and log paths
                 JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
                 LOG_DIR="$(Pipeline.Workspace)/drop-perftests/log/jmeter"
                 
                 # Create directories for logs
                 mkdir -p ${LOG_DIR}/endurance-test
-                
-                # Run the Endurance Test Suite
-                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/drop-perftests/EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/drop-perftests/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+
+                # Run the Endurance Test Suite with correct path to test_data.csv
+                ${JMETER_DIR}/jmeter -n -t "EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/drop-perftests/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
                 
                 # Display Endurance Test Logs
                 echo "JMETER LOG ENDURANCE TEST"
                 cat ${LOG_DIR}/endurance-test/jmeter.log
               workingDirectory: $(Pipeline.Workspace)/drop-perftests
 
+
           - task: CmdLine@2
             displayName: Run Stress Test with JMeter
             inputs:
               script: |
                 # Run the Stress Test Suite
-                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/drop-perftests/StressTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/drop-perftests/test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t "StressTestSuite.jmx" -Jresdir="test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
                 
                 # Display Stress Test Logs
                 echo "JMETER LOG STRESS TEST"
