@@ -190,60 +190,70 @@ stages:
   jobs:
   #--------------------------------------------#  
   # Deploy FakeRestAPI Web App
-  # ToDo: Provide <environment name> you created in your DevOps project
   - deployment: FakeRestAPI
     pool: myAgentPool
-    # vmImage: 'Ubuntu-18.04'      
     environment: "$(environmentName)"
     strategy:
       runOnce:
         deploy:
           steps:
+          # Deploy the Azure Web App
           - task: AzureWebApp@1
             displayName: 'Deploy Azure Web App'
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
               appName: 'myApplication-AppService'
               appType: webApp
-              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'  # Use the published zip artifact
+              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
 
           #-------------------------------------------------#
           # Run JMeter test suite against the App Service
           - task: CmdLine@2
-            displayName: Run JMeter Performance Tests
+            displayName: Run Endurance Test with JMeter
             inputs:
               script: |
-                # Update package list and install required packages
-                sudo apt-get update
-                sudo apt install -y curl zip default-jre default-jdk
-
-                # Download and extract Apache JMeter
+                # Install necessary packages
+                sudo apt-get update && sudo apt-get install -y curl zip default-jre default-jdk
+                
+                # Set JMeter version and download URL
                 JMETER_VERSION="5.6.2"
                 JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
+                
+                # Download and extract JMeter
                 wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}"
                 tar -xf ${JMETER_TGZ}
-
-                # Unzip performance test files
-                unzip -o "$(Build.BuildId)-perftests.zip"
-
-                # Run JMeter test suites and save logs
+                
+                # Unzip performance test files from artifact
+                unzip -o "$(Pipeline.Workspace)/drop-perftests/$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
+                
+                # Set JMeter directory and log paths
                 JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="log/jmeter"
-
-                mkdir -p ${LOG_DIR}/stress-test ${LOG_DIR}/endurance-test
-
-                ${JMETER_DIR}/jmeter -n -t stress-test.jmx -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
-                ${JMETER_DIR}/jmeter -n -t endurance-test.jmx -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
-
-                # Display JMeter logs
-                echo "JMETER LOG STRESS TEST"
-                cat ${LOG_DIR}/stress-test/jmeter.log
-
+                LOG_DIR="$(Pipeline.Workspace)/drop-perftests/log/jmeter"
+                
+                # Create directories for logs
+                mkdir -p ${LOG_DIR}/endurance-test
+                
+                # Run the Endurance Test Suite
+                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/automatedtesting/jmeter/EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+                
+                # Display Endurance Test Logs
                 echo "JMETER LOG ENDURANCE TEST"
                 cat ${LOG_DIR}/endurance-test/jmeter.log
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests # Ensure this path matches your artifact location
+              workingDirectory: $(Pipeline.Workspace)/drop-perftests
 
-          # Archive JMeter logs
+          - task: CmdLine@2
+            displayName: Run Stress Test with JMeter
+            inputs:
+              script: |
+                # Run the Stress Test Suite
+                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/automatedtesting/jmeter/StressTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                
+                # Display Stress Test Logs
+                echo "JMETER LOG STRESS TEST"
+                cat ${LOG_DIR}/stress-test/jmeter.log
+              workingDirectory: $(Pipeline.Workspace)/drop-perftests
+
+          # Archive JMeter test logs as build artifacts
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
@@ -252,6 +262,14 @@ stages:
               archiveType: "zip"
               archiveFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter-$(Build.BuildId).zip"
               verbose: true
+
+          # Publish JMeter logs as build artifacts
+          - task: PublishBuildArtifacts@1
+            displayName: Publish JMeter Artifacts
+            inputs:
+              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/log/jmeter'
+              ArtifactName: 'jmeter-results'
+              publishLocation: 'Container'
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
