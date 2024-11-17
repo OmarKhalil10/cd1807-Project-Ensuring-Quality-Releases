@@ -223,8 +223,8 @@ stages:
                 unzip -o "$(Build.BuildId)-perftests.zip"
                 
                 # Set JMeter directory and log paths
-                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="drop-perftests/log/jmeter"
+                JMETER_DIR="./apache-jmeter-5.2.1/bin"
+                LOG_DIR="jmeter-logs"
                 
                 # Create directories for logs
                 mkdir -p ${LOG_DIR}/endurance-test
