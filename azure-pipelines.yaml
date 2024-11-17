@@ -191,7 +191,8 @@ stages:
   #--------------------------------------------#  
   # Deploy FakeRestAPI Web App
   - deployment: FakeRestAPI
-    pool: myAgentPool
+    pool:
+      vmImage: 'Ubuntu-18.04' # Use an Ubuntu image
     environment: "$(environmentName)"
     strategy:
       runOnce:
