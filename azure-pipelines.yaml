@@ -243,7 +243,7 @@ stages:
                 # Create directories for logs
                 mkdir -p ${LOG_DIR}/endurance-test
 
-                # Run the Endurance Test Suite with correct path to test_data.csv
+                # Run the Endurance Test Suite with full path to test_data.csv
                 ${JMETER_DIR}/jmeter -n -t "EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/drop-perftests/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
                 
                 # Display Endurance Test Logs
@@ -252,10 +252,15 @@ stages:
               workingDirectory: $(Pipeline.Workspace)/drop-perftests
 
 
+
           - task: CmdLine@2
             displayName: Run Stress Test with JMeter
             inputs:
               script: |
+                # Set JMeter directory and log paths
+                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"                
+                LOG_DIR="./log/jmeter"
+                
                 # Run the Stress Test Suite
                 ${JMETER_DIR}/jmeter -n -t "StressTestSuite.jmx" -Jresdir="test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
                 
