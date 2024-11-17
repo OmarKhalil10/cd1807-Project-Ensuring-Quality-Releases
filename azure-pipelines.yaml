@@ -206,75 +206,43 @@ stages:
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
 
-          #--------------------------------------------#  
-          # Run JMeter test suite against the App Service
-          - task: CmdLine@2
-            displayName: Run Endurance and Stress Tests with JMeter
+          - task: JMeterInstaller@0
             inputs:
+              jmeterVersion: '5.2.1'
+
+          - task: Bash@3
+            displayName: Endurance Test
+            inputs:
+              targetType: 'inline'
               script: |
-                # Update package list and install required packages
-                sudo apt-get update && sudo apt-get install -y curl zip default-jre default-jdk
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/endurancepages.csv" \
+                  -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
+                  -e -o "automatedtesting/jmeter/endurancereport"
 
-                # Define JMeter version and download URL
-                JMETER_VERSION="5.6.2"
-                JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
+          - task: Bash@3
+            displayName: Stress Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/stresspages.csv" \
+                  -l "automatedtesting/jmeter/report/stressresults.jtl" \
+                  -e -o "automatedtesting/jmeter/stressreport"
 
-                # Download and extract JMeter
-                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}" && tar -xf ${JMETER_TGZ}
-
-                # Unzip performance test files
-                unzip -o "$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
-
-                # Check for test_data.csv file
-                TEST_DATA_PATH="$(Pipeline.Workspace)/drop-perftests/test_data.csv"
-                if [ ! -f "${TEST_DATA_PATH}" ]; then
-                  echo "test_data.csv NOT found"
-                  exit 1
-                fi
-                echo "test_data.csv found"
-
-                # Set JMeter directory and log paths
-                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="jmeter-logs"
-
-                # Create log directories
-                mkdir -p ${LOG_DIR}/{endurance-test,stress-test}
-
-                # Function to run JMeter tests
-                run_jmeter_test() {
-                  local test_suite=$1
-                  local log_suffix=$2
-                  ${JMETER_DIR}/jmeter -n -t "${test_suite}.jmx" \
-                    -Jresdir="${TEST_DATA_PATH}" \
-                    -l ${LOG_DIR}/${log_suffix}.csv -e -f \
-                    -o ${LOG_DIR}/${log_suffix}/html \
-                    -j ${LOG_DIR}/${log_suffix}/jmeter.log
-                  echo "JMETER LOG ${log_suffix^^} TEST"
-                  cat ${LOG_DIR}/${log_suffix}/jmeter.log
-                }
-
-                # Run tests
-                run_jmeter_test "EnduranceTestSuite" "endurance-test"
-                run_jmeter_test "StressTestSuite" "stress-test"
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests
-
-          #--------------------------------------------#  
-          # Archive JMeter test logs as build artifacts
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs"  # Updated path to match the new log directory structure
+              rootFolderOrFile: "$(Pipeline.Workspace)/automatedtesting/jmeter/report"  # Path to the reports
               includeRootFolder: false
               archiveType: "zip"
-              archiveFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs-$(Build.BuildId).zip"  # Updated archive file name
+              archiveFile: "$(Pipeline.Workspace)/jmeter-reports-$(Build.BuildId).zip"  # Archive name
               verbose: true
 
-          #--------------------------------------------#  
-          # Publish JMeter test logs as build artifacts
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/jmeter-logs'  # Updated path to match the new log directory structure
+              PathtoPublish: 'automatedtesting/jmeter/report'  # Path to publish
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
 
