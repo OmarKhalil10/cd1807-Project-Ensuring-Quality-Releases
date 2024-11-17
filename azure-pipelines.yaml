@@ -224,17 +224,18 @@ stages:
                 tar -xf ${JMETER_TGZ}
                 
                 # Unzip performance test files from artifact
-                unzip -o "$(Pipeline.Workspace)/drop-perftests/$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
+                unzip -o "EnduranceTestSuite.jmx" -d "."
+                unzip -o "test_data.csv" -d "."
                 
                 # Set JMeter directory and log paths
                 JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="$(Pipeline.Workspace)/drop-perftests/log/jmeter"
+                LOG_DIR="./log/jmeter"
                 
                 # Create directories for logs
                 mkdir -p ${LOG_DIR}/endurance-test
                 
                 # Run the Endurance Test Suite
-                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/automatedtesting/jmeter/EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t "EnduranceTestSuite.jmx" -Jresdir="test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
                 
                 # Display Endurance Test Logs
                 echo "JMETER LOG ENDURANCE TEST"
@@ -246,7 +247,7 @@ stages:
             inputs:
               script: |
                 # Run the Stress Test Suite
-                ${JMETER_DIR}/jmeter -n -t "$(Pipeline.Workspace)/automatedtesting/jmeter/StressTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t "StressTestSuite.jmx" -Jresdir="test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
                 
                 # Display Stress Test Logs
                 echo "JMETER LOG STRESS TEST"
