@@ -215,13 +215,9 @@ stages:
                 # Install necessary packages
                 sudo apt-get update && sudo apt-get install -y curl zip default-jre default-jdk
                 
-                # Set JMeter version and download URL
-                JMETER_VERSION="5.2.1"
-                JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
-                
-                # Download and extract JMeter
-                wget "https://apache.mirrors.lucidnetworks.net//jmeter/binaries/${JMETER_TGZ}"
-                tar -xf ${JMETER_TGZ}
+                # Download JMeter
+                wget "https://apache.mirrors.lucidnetworks.net//jmeter/binaries/apache-jmeter-5.2.1.tgz"
+                tar -xf apache-jmeter-5.2.1.tgz
                 
                 # Unzip performance test files from artifact
                 unzip -o "$(Build.BuildId)-perftests.zip"
