@@ -278,7 +278,7 @@ stages:
 
                 sudo apt install python3.7
                 sudo apt-get install python3.7-venv
-                sudo apt-get install python3-pip
+                sudo apt-get install python3-pip -y
                 sudo apt-get install unzip -y
                 sudo apt-get install -y chromium-browser
 
