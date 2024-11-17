@@ -205,11 +205,13 @@ stages:
               appName: 'myApplication-AppService'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
-
+          
+          # Jmeter installation
           - task: JMeterInstaller@0
             inputs:
               jmeterVersion: '5.2.1'
 
+          # JMeter - Run the Endurance Test Suite
           - task: Bash@3
             displayName: Endurance Test
             inputs:
@@ -220,6 +222,7 @@ stages:
                   -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
                   -e -o "automatedtesting/jmeter/endurancereport"
 
+          # Run the JMeter Stress Test Suite
           - task: Bash@3
             displayName: Stress Test
             inputs:
@@ -230,6 +233,7 @@ stages:
                   -l "automatedtesting/jmeter/report/stressresults.jtl" \
                   -e -o "automatedtesting/jmeter/stressreport"
 
+          # Archive the JMeter log files
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
@@ -239,6 +243,7 @@ stages:
               archiveFile: "$(Pipeline.Workspace)/jmeter-reports-$(Build.BuildId).zip"  # Archive name
               verbose: true
 
+          # Publish the JMeter log files
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
