@@ -46,7 +46,7 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
         backendAzureRmResourceGroupName: 'Azuredevops'
-        backendAzureRmStorageAccountName: 'tfstate2539721075'
+        backendAzureRmStorageAccountName: 'tfstate194664843'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: "$(access_key)"
     
@@ -203,7 +203,7 @@ stages:
             displayName: 'Deploy Azure Web App'
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
-              appName: 'myApplication-AppService-7935e6b82c480971'
+              appName: 'myApplication-AppService'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'  # Use the published zip artifact
 
