@@ -237,7 +237,7 @@ stages:
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/automatedtesting/jmeter/report"  # Path to the reports
+              rootFolderOrFile: "$(Pipeline.Workspace)/report"  # Path to the reports
               includeRootFolder: false
               archiveType: "zip"
               archiveFile: "$(Pipeline.Workspace)/jmeter-reports-$(Build.BuildId).zip"  # Archive name
