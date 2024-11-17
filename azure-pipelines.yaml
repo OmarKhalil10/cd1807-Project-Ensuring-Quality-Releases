@@ -27,60 +27,60 @@ stages:
   jobs:
   - job: BuildInfrastructure
     steps:
-    # #--------------------------------------------#  
-    # # Use Terraform to create the Infrastructure      
-    # # Install Terraform on the pipeline agent 
-    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-    #   displayName: 'Terraform installation'
-    #   inputs:
-    #     terraformVersion: '1.6.3'
+    #--------------------------------------------#  
+    # Use Terraform to create the Infrastructure      
+    # Install Terraform on the pipeline agent 
+    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Terraform installation'
+      inputs:
+        terraformVersion: '1.6.3'
 
-    # # Run Terraform Init on the pipeline agent 
-    # # ToDo: Replace the resource group name, storage account name, and container name below
-    # # Run Terraform Init on the pipeline agent 
-    # - task: TerraformTaskV4@4
-    #   displayName: 'Terraform init'
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'init'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-    #     backendServiceArm: 'myServiceConnection'
-    #     backendAzureRmResourceGroupName: 'Azuredevops'
-    #     backendAzureRmStorageAccountName: 'tfstate2458128476'
-    #     backendAzureRmContainerName: 'tfstate'
-    #     backendAzureRmKey: "$(access_key)"
+    # Run Terraform Init on the pipeline agent 
+    # ToDo: Replace the resource group name, storage account name, and container name below
+    # Run Terraform Init on the pipeline agent 
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        backendServiceArm: 'myServiceConnection'
+        backendAzureRmResourceGroupName: 'Azuredevops'
+        backendAzureRmStorageAccountName: 'tfstate2458128476'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: "$(access_key)"
     
-    # # Run Terraform validate on the pipeline agent 
-    # - task: TerraformTaskV4@4
-    #   displayName: Terraform validate
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'validate'
+    # Run Terraform validate on the pipeline agent 
+    - task: TerraformTaskV4@4
+      displayName: Terraform validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
 
-    # # OPTIONAL - This step is needed only if your Terraform VM uses an SSH key pair for login and you want your pipeline agent to connect to it. 
-    # # Generate an SSH key pair in your local/AZ Cloud shell. Use the public key in the Terraform VM module. 
-    # # Install public key and private key file to the pipeline agent, using the task below. 
-    # # ToDo: Change the inputs value below
-    # # - task: InstallSSHKey@0
-    # #   inputs:
-    # #     knownHostsEntry: 'KNOWN_HOSTS_STRING' # variable value
-    # #     sshPublicKey: 'PUBLIC_KEY'            # variable value
-    # #     sshKeySecureFile: 'id_rsa' # Use secure file feature in the pipeline library UI to save the "id_rsa" file, as mentioned here: https://learn.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=azure-devops#add-a-secure-file
+    # OPTIONAL - This step is needed only if your Terraform VM uses an SSH key pair for login and you want your pipeline agent to connect to it. 
+    # Generate an SSH key pair in your local/AZ Cloud shell. Use the public key in the Terraform VM module. 
+    # Install public key and private key file to the pipeline agent, using the task below. 
+    # ToDo: Change the inputs value below
+    # - task: InstallSSHKey@0
+    #   inputs:
+    #     knownHostsEntry: 'KNOWN_HOSTS_STRING' # variable value
+    #     sshPublicKey: 'PUBLIC_KEY'            # variable value
+    #     sshKeySecureFile: 'id_rsa' # Use secure file feature in the pipeline library UI to save the "id_rsa" file, as mentioned here: https://learn.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=azure-devops#add-a-secure-file
     
-    # # - task: DownloadSecureFile@1
-    # #  name: udacity_public_key
-    # #  displayName: 
-    # #  inputs:
-    # #   secureFile: 
+    # - task: DownloadSecureFile@1
+    #  name: udacity_public_key
+    #  displayName: 
+    #  inputs:
+    #   secureFile: 
 
-    # # Run Terraform Apply
-    # - task: TerraformTaskV4@4
-    #   displayName: Terraform apply
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'apply'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-    #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+    # Run Terraform Apply
+    - task: TerraformTaskV4@4
+      displayName: Terraform apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     # # ToDo: Change the workingDirectory path, as applicable to you
     # # Destroy the resources in Azure by running a separate pipeline. 
@@ -207,7 +207,7 @@ stages:
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
 
           #-------------------------------------------------#
-          # Run Endurance Test with JMeter
+          # Run JMeter test suite against the App Service
           - task: CmdLine@2
             displayName: Run Endurance Test with JMeter
             inputs:
@@ -224,50 +224,34 @@ stages:
                 tar -xf ${JMETER_TGZ}
                 
                 # Unzip performance test files from artifact
-                unzip -o "$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
+                unzip -o "drop-perftests/$(Build.BuildId)-perftests.zip" -d "drop-perftests"
                 
-                # Verify that the files are extracted
-                ls -l "$(Pipeline.Workspace)/drop-perftests"
-                echo "Checking for test_data.csv file..."
-                if [ -f "$(Pipeline.Workspace)/drop-perftests/test_data.csv" ]; then
-                  echo "test_data.csv found"
-                else
-                  echo "test_data.csv NOT found"
-                  exit 1
-                fi
-
                 # Set JMeter directory and log paths
                 JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
-                LOG_DIR="$(Pipeline.Workspace)/drop-perftests/log/jmeter"
+                LOG_DIR="drop-perftests/log/jmeter"
                 
                 # Create directories for logs
                 mkdir -p ${LOG_DIR}/endurance-test
-
-                # Run the Endurance Test Suite with full path to test_data.csv
-                ${JMETER_DIR}/jmeter -n -t "EnduranceTestSuite.jmx" -Jresdir="$(Pipeline.Workspace)/drop-perftests/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
+                
+                # Run the Endurance Test Suite
+                ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" -Jresdir="automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
                 
                 # Display Endurance Test Logs
                 echo "JMETER LOG ENDURANCE TEST"
                 cat ${LOG_DIR}/endurance-test/jmeter.log
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests
-
-
+              workingDirectory: $(Pipeline.Workspace)/s
 
           - task: CmdLine@2
             displayName: Run Stress Test with JMeter
             inputs:
               script: |
-                # Set JMeter directory and log paths
-                JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"                
-                LOG_DIR="./log/jmeter"
-                
                 # Run the Stress Test Suite
-                ${JMETER_DIR}/jmeter -n -t "StressTestSuite.jmx" -Jresdir="test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
+                ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" -Jresdir="automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
                 
                 # Display Stress Test Logs
                 echo "JMETER LOG STRESS TEST"
                 cat ${LOG_DIR}/stress-test/jmeter.log
-              workingDirectory: $(Pipeline.Workspace)/drop-perftests
+              workingDirectory: $(Pipeline.Workspace)/s
 
           # Archive JMeter test logs as build artifacts
           - task: ArchiveFiles@2
