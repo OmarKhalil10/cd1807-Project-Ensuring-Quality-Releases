@@ -244,7 +244,7 @@ stages:
                 run_jmeter_test() {
                   local test_suite=$1
                   local log_suffix=$2
-                  ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/${test_suite}.jmx" \
+                  ${JMETER_DIR}/jmeter -n -t "${test_suite}.jmx" \
                     -Jresdir="${TEST_DATA_PATH}" \
                     -l ${LOG_DIR}/${log_suffix}.csv -e -f \
                     -o ${LOG_DIR}/${log_suffix}/html \
@@ -263,10 +263,10 @@ stages:
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs" 
+              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs"  # Updated path to match the new log directory structure
               includeRootFolder: false
               archiveType: "zip"
-              archiveFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs-$(Build.BuildId).zip"
+              archiveFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs-$(Build.BuildId).zip"  # Updated archive file name
               verbose: true
 
           #--------------------------------------------#  
@@ -274,7 +274,7 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/jmeter-logs'
+              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/jmeter-logs'  # Updated path to match the new log directory structure
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
 
