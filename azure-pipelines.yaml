@@ -212,51 +212,50 @@ stages:
             displayName: Run Endurance and Stress Tests with JMeter
             inputs:
               script: |
-                # Install necessary packages
+                # Update package list and install required packages
                 sudo apt-get update && sudo apt-get install -y curl zip default-jre default-jdk
-                
-                # Set JMeter version and download URL
+
+                # Define JMeter version and download URL
                 JMETER_VERSION="5.6.2"
                 JMETER_TGZ="apache-jmeter-${JMETER_VERSION}.tgz"
-                
+
                 # Download and extract JMeter
-                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}"
-                tar -xf ${JMETER_TGZ}
-                
-                # Unzip performance test files from artifact
+                wget "https://archive.apache.org/dist/jmeter/binaries/${JMETER_TGZ}" && tar -xf ${JMETER_TGZ}
+
+                # Unzip performance test files
                 unzip -o "$(Build.BuildId)-perftests.zip" -d "$(Pipeline.Workspace)/drop-perftests"
-                
-                # Verify that the files are extracted
-                ls -l "$(Pipeline.Workspace)/drop-perftests"
-                echo "Checking for test_data.csv file..."
-                if [ -f "$(Pipeline.Workspace)/drop-perftests/test_data.csv" ]; then
-                  echo "test_data.csv found"
-                else
+
+                # Check for test_data.csv file
+                TEST_DATA_PATH="$(Pipeline.Workspace)/drop-perftests/test_data.csv"
+                if [ ! -f "${TEST_DATA_PATH}" ]; then
                   echo "test_data.csv NOT found"
                   exit 1
                 fi
+                echo "test_data.csv found"
 
                 # Set JMeter directory and log paths
                 JMETER_DIR="./apache-jmeter-${JMETER_VERSION}/bin"
                 LOG_DIR="jmeter-logs"
-                
-                # Create directories for logs
-                mkdir -p ${LOG_DIR}/endurance-test
-                mkdir -p ${LOG_DIR}/stress-test
-                
-                # Run the Endurance Test Suite
-                ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" -Jresdir="automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/endurance-test/endurance-test.csv -e -f -o ${LOG_DIR}/endurance-test/html -j ${LOG_DIR}/endurance-test/jmeter.log
-                
-                # Display Endurance Test Logs
-                echo "JMETER LOG ENDURANCE TEST"
-                cat ${LOG_DIR}/endurance-test/jmeter.log
 
-                # Run the Stress Test Suite
-                ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" -Jresdir="automatedtesting/jmeter/test_data.csv" -l ${LOG_DIR}/stress-test/stress-test.csv -e -f -o ${LOG_DIR}/stress-test/html -j ${LOG_DIR}/stress-test/jmeter.log
-                
-                # Display Stress Test Logs
-                echo "JMETER LOG STRESS TEST"
-                cat ${LOG_DIR}/stress-test/jmeter.log
+                # Create log directories
+                mkdir -p ${LOG_DIR}/{endurance-test,stress-test}
+
+                # Function to run JMeter tests
+                run_jmeter_test() {
+                  local test_suite=$1
+                  local log_suffix=$2
+                  ${JMETER_DIR}/jmeter -n -t "automatedtesting/jmeter/${test_suite}.jmx" \
+                    -Jresdir="${TEST_DATA_PATH}" \
+                    -l ${LOG_DIR}/${log_suffix}.csv -e -f \
+                    -o ${LOG_DIR}/${log_suffix}/html \
+                    -j ${LOG_DIR}/${log_suffix}/jmeter.log
+                  echo "JMETER LOG ${log_suffix^^} TEST"
+                  cat ${LOG_DIR}/${log_suffix}/jmeter.log
+                }
+
+                # Run tests
+                run_jmeter_test "EnduranceTestSuite" "endurance-test"
+                run_jmeter_test "StressTestSuite" "stress-test"
               workingDirectory: $(Pipeline.Workspace)/drop-perftests
 
           #--------------------------------------------#  
@@ -264,10 +263,10 @@ stages:
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter"
+              rootFolderOrFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs" 
               includeRootFolder: false
               archiveType: "zip"
-              archiveFile: "$(Pipeline.Workspace)/drop-perftests/log/jmeter-$(Build.BuildId).zip"
+              archiveFile: "$(Pipeline.Workspace)/drop-perftests/jmeter-logs-$(Build.BuildId).zip"
               verbose: true
 
           #--------------------------------------------#  
@@ -275,10 +274,9 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/log/jmeter'
+              PathtoPublish: '$(Pipeline.Workspace)/drop-perftests/jmeter-logs'
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
-
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
