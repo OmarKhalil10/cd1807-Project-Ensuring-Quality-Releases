@@ -217,10 +217,10 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                jmeter -n -t "EnduranceTestSuite.jmx" \
-                  -Jresdir="endurancepages.csv" \
-                  -l "report/enduranceresults.jtl" \
-                  -e -o "endurancereport"
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/endurancepages.csv" \
+                  -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
+                  -e -o "automatedtesting/jmeter/endurancereport"
 
           # Run the JMeter Stress Test Suite
           - task: Bash@3
@@ -228,26 +228,26 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                jmeter -n -t "StressTestSuite.jmx" \
-                  -Jresdir="stresspages.csv" \
-                  -l "report/stressresults.jtl" \
-                  -e -o "stressreport"
+                jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/stresspages.csv" \
+                  -l "automatedtesting/jmeter/report/stressresults.jtl" \
+                  -e -o "automatedtesting/jmeter/stressreport"
 
           # Archive the JMeter log files
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "$(Pipeline.Workspace)/report"  # Path to the reports
+              rootFolderOrFile: "automatedtesting/jmeter/report"  # Path to the reports
               includeRootFolder: false
               archiveType: "zip"
-              archiveFile: "$(Pipeline.Workspace)/jmeter-reports-$(Build.BuildId).zip"  # Archive name
+              archiveFile: "jmeter-reports-$(Build.BuildId).zip"  # Archive name
               verbose: true
 
           # Publish the JMeter log files
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: './report'  # Path to publish
+              PathtoPublish: 'automatedtesting/jmeter/report'  # Path to publish
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
 
