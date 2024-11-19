@@ -167,6 +167,18 @@ stages:
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
               deploymentMethod: 'auto'
           
+          # Install Java
+          - task: Bash@3
+            displayName: Install Java
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt update
+                sudo apt install -y openjdk-11-jdk
+                echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
+                source /etc/environment
+                echo "Java installed and JAVA_HOME set to $JAVA_HOME"
+
           # Jmeter installation
           - task: Bash@3
             displayName: Install JMeter
@@ -184,6 +196,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                source /etc/environment
                 jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" \
                   -Jresdir="automatedtesting/jmeter/endurancepages.csv" \
                   -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
@@ -195,6 +208,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                source /etc/environment
                 jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" \
                   -Jresdir="automatedtesting/jmeter/stresspages.csv" \
                   -l "automatedtesting/jmeter/report/stressresults.jtl" \
@@ -217,7 +231,7 @@ stages:
               PathtoPublish: 'automatedtesting/jmeter/report'
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
-
+              
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
   - deployment: VMDeploy
@@ -246,7 +260,15 @@ stages:
                   python3.7-venv \
                   python3-pip \
                   unzip \
-                  chromium-browser
+                  chromium-browser \
+                  libnss3 \
+                  libgconf-2-4 \
+                  libxi6 \
+                  libxss1 \
+                  libappindicator1 \
+                  libindicator7 \
+                  fonts-liberation \
+                  xdg-utils
 
                 # Add deadsnakes PPA and update package list
                 sudo add-apt-repository -y ppa:deadsnakes/ppa
@@ -261,11 +283,11 @@ stages:
                 cd $APP_DIR
                 unzip -o $(Build.BuildId)-uitests.zip
 
-                # Download the chromedriver version for the installed Chromium version (130.0.6723.116)
-                CHROME_VERSION="130.0.6723.116"
+                # Download the chromedriver version for the installed Chromium version
+                CHROME_VERSION=$(chromium-browser --version | grep -oP '\d+\.\d+\.\d+')
                 CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
                 if [ ! -f "$APP_DIR/$CHROMEDRIVER_ZIP" ]; then
-                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_130")
+                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
                     wget -O $CHROMEDRIVER_ZIP https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
                     unzip -o $CHROMEDRIVER_ZIP
                     sudo rm -f /usr/local/bin/chromedriver  # Remove existing symlink if it exists
