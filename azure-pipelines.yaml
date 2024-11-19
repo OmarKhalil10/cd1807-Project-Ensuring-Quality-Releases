@@ -157,6 +157,13 @@ stages:
       runOnce:
         deploy:
           steps:
+          # Debugging step to print variables
+          - script: |
+              echo "Azure Service Connection ID: $(azureServiceConnectionId)"
+              echo "App Name: myApplication-AppService"
+              echo "Package Path: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip"
+            displayName: 'Print Variables'
+
           # Deploy the Azure Web App
           - task: AzureWebApp@1
             displayName: 'Deploy Azure Web App'
