@@ -100,6 +100,7 @@ stages:
     #     searchFolder: '$(System.DefaultWorkingDirectory)'
     #     mergeTestResults: true
     #     testRunTitle: 'Postman Tests'
+    
 
     #--------------------------------------------#
     # Selenium (UI) Test Suite - Archive the package  
