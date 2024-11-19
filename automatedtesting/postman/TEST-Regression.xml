@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Regression Test Suite" tests="2" time="0.704">
+  <testsuite name="Create Author Test" id="50fa1c2b-a498-41de-8102-94b99208bce7" timestamp="2024-11-19T03:03:01.143Z" tests="1" failures="0" errors="0" time="0.472">
+    <testcase name="Successful response" time="0.472" classname="CreateAuthorTest"/>
+  </testsuite>
+  <testsuite name="Get All Authors Test" id="d7c35b0d-41bf-405e-91f6-5be39a26243d" timestamp="2024-11-19T03:03:01.143Z" tests="1" failures="0" errors="0" time="0.232">
+    <testcase name="Successful response" time="0.232" classname="GetAllAuthorsTest"/>
+  </testsuite>
+</testsuites>
