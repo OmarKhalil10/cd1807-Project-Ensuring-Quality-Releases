@@ -8,3 +8,4 @@ This repository contains the starter code for the **Ensuring Quality Releases** 
 
 ## Suggestions and Corrections
 Feel free to submit PRs to this repo should you have any proposed changes. 
+
