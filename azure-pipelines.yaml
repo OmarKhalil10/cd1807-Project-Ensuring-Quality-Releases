@@ -165,7 +165,7 @@ stages:
               appName: 'myApplication-AppService'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
-              deploymentMethod: 'auto'
+              deploymentMethod: zipDeploy
           
           # Install Java
           - task: Bash@3
