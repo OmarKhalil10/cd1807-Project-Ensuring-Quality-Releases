@@ -38,7 +38,7 @@ stages:
         backendAzureRmResourceGroupName: 'Azuredevops'
         backendAzureRmStorageAccountName: 'tfstate182077659'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: 'my-tfstate-key'
+        backendAzureRmKey: 'PelEU7sFMN3WBuM4M7XVU5yHxKYE0Yan2qK7JDokugAzi0+EwxvLtdArENojqY2YdkZamt5FOj5b+AStqUWAQQ=='
     
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
