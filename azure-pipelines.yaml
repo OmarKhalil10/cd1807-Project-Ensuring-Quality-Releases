@@ -164,7 +164,7 @@ stages:
               azureSubscription: '$(azureServiceConnectionId)'
               appName: 'myApplication-AppService'
               appType: webApp
-              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
+              package: '/home/devopsagent/myagent/_work/1/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
               deploymentMethod: zipDeploy
           
           # Install Java
