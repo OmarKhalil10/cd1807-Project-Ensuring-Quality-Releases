@@ -151,7 +151,7 @@ stages:
   # Deploy FakeRestAPI Web App
   - deployment: FakeRestAPI
     pool:
-      vmImage: 'Ubuntu-18.04'
+      name: 'myAgentPool'
     environment: "test-vm"
     strategy:
       runOnce:
@@ -238,6 +238,10 @@ stages:
               script: |
                 #! /bin/bash
 
+                sudo apt update
+                sudo apt install software-properties-common
+                sudo add-apt-repository ppa:deadsnakes/ppa
+                sudo apt update
                 sudo apt install python3.7
                 sudo apt-get install python3.7-venv
                 sudo apt-get install python3-pip -y
@@ -286,6 +290,6 @@ stages:
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/selenium.log'
-              searchFolder: '$(System.DefaultWorkingDirectory)/log/selenium/'
+              searchFolder: '/home/azureuser/app'
               mergeTestResults: true
               testRunTitle: 'Selenium Tests'
