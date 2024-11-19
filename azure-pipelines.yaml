@@ -19,87 +19,87 @@ stages:
     pool:
       name: myAgentPool
     steps:
-    # #--------------------------------------------#  
-    # # Use Terraform to create the Infrastructure      
-    # # Install Terraform on the pipeline agent 
-    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-    #   displayName: 'Terraform installation'
-    #   inputs:
-    #     terraformVersion: '1.6.3'
+    #--------------------------------------------#  
+    # Use Terraform to create the Infrastructure      
+    # Install Terraform on the pipeline agent 
+    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Terraform installation'
+      inputs:
+        terraformVersion: '1.6.3'
 
-    # # Run Terraform Init on the pipeline agent 
-    # - task: TerraformTaskV4@4
-    #   displayName: 'Terraform init'
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'init'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-    #     backendServiceArm: 'myServiceConnection'
-    #     backendAzureRmResourceGroupName: 'Azuredevops'
-    #     backendAzureRmStorageAccountName: 'tfstate870815323'
-    #     backendAzureRmContainerName: 'tfstate'
-    #     backendAzureRmKey: 'P1XeboPdNN9vV2sBvprKH8wBKI7VKkRcHb+wCFqRTySocUyN+Jlh2sy5d/NzR4/5v2NAWt1PKe5O+AStrK6BiA=='
+    # Run Terraform Init on the pipeline agent 
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        backendServiceArm: 'myServiceConnection'
+        backendAzureRmResourceGroupName: 'Azuredevops'
+        backendAzureRmStorageAccountName: 'tfstate870815323'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: 'P1XeboPdNN9vV2sBvprKH8wBKI7VKkRcHb+wCFqRTySocUyN+Jlh2sy5d/NzR4/5v2NAWt1PKe5O+AStrK6BiA=='
     
-    # # Run Terraform validate on the pipeline agent 
-    # - task: TerraformTaskV4@4
-    #   displayName: Terraform validate
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'validate'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    # Run Terraform validate on the pipeline agent 
+    - task: TerraformTaskV4@4
+      displayName: Terraform validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
-    # # Run Terraform Apply
-    # - task: TerraformTaskV4@4
-    #   displayName: Terraform apply
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'apply'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-    #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+    # Run Terraform Apply
+    - task: TerraformTaskV4@4
+      displayName: Terraform apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
-    # #--------------------------------------------#   
-    # # Install Node.js
-    # - task: NodeTool@0
-    #   displayName: 'Install Node.js'
-    #   inputs:
-    #     versionSource: 'spec'
-    #     versionSpec: '16.x'
+    #--------------------------------------------#   
+    # Install Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js'
+      inputs:
+        versionSource: 'spec'
+        versionSpec: '16.x'
 
-    # # Verify npm installation
-    # - task: CmdLine@2
-    #   displayName: Verify npm
-    #   inputs:
-    #     script: 'npm --version'
+    # Verify npm installation
+    - task: CmdLine@2
+      displayName: Verify npm
+      inputs:
+        script: 'npm --version'
 
-    # # Install Newman
-    # - task: CmdLine@2
-    #   displayName: Install Newman
-    #   inputs:
-    #     script: 'npm install -g newman'
-    #     workingDirectory: $(System.DefaultWorkingDirectory)
+    # Install Newman
+    - task: CmdLine@2
+      displayName: Install Newman
+      inputs:
+        script: 'npm install -g newman'
+        workingDirectory: $(System.DefaultWorkingDirectory)
         
-    # # Postman Data Validation Test Suite    
-    # - task: CmdLine@2
-    #   displayName: Run Data Validation Tests
-    #   continueOnError: true
-    #   inputs:
-    #     script: 'newman run TestSuite.Data-Validation.json -e Test.environment.json --reporters cli,junit --reporter-junit-export TEST-DataValidation.xml'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/automatedtesting/postman'
-    # # Postman Regression Test Suite    
-    # - task: CmdLine@2
-    #   displayName: Run Regression Tests
-    #   continueOnError: true
-    #   inputs:
-    #     script: 'newman run TestSuite.Regression.json -e Test.environment.json --reporters cli,junit --reporter-junit-export TEST-Regression.xml'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/automatedtesting/postman'
-    # # Postman - Publish Results 
-    # - task: PublishTestResults@2
-    #   inputs:
-    #     testResultsFormat: 'JUnit'
-    #     testResultsFiles: '**/TEST-*.xml'
-    #     searchFolder: '$(System.DefaultWorkingDirectory)'
-    #     mergeTestResults: true
-    #     testRunTitle: 'Postman Tests'
+    # Postman Data Validation Test Suite    
+    - task: CmdLine@2
+      displayName: Run Data Validation Tests
+      continueOnError: true
+      inputs:
+        script: 'newman run TestSuite.Data-Validation.json -e Test.environment.json --reporters cli,junit --reporter-junit-export TEST-DataValidation.xml'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/automatedtesting/postman'
+    # Postman Regression Test Suite    
+    - task: CmdLine@2
+      displayName: Run Regression Tests
+      continueOnError: true
+      inputs:
+        script: 'newman run TestSuite.Regression.json -e Test.environment.json --reporters cli,junit --reporter-junit-export TEST-Regression.xml'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/automatedtesting/postman'
+    # Postman - Publish Results 
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TEST-*.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        mergeTestResults: true
+        testRunTitle: 'Postman Tests'
 
     #--------------------------------------------#
     # Selenium (UI) Test Suite - Archive the package  
