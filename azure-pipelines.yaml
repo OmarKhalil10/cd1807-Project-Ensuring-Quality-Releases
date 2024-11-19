@@ -187,9 +187,21 @@ stages:
               script: |
                 wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
                 tar -xvzf apache-jmeter-5.6.3.tgz
-                sudo mv apache-jmeter-5.6.3 /opt/
-                sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
-
+                
+                # Check if the JMeter directory already exists
+                if [ -d "/opt/apache-jmeter-5.6.3" ]; then
+                    echo "JMeter directory already exists. Skipping move."
+                else
+                    sudo mv apache-jmeter-5.6.3 /opt/
+                fi
+                
+                # Check if the symbolic link already exists
+                if [ -L /usr/local/bin/jmeter ]; then
+                    echo "JMeter symbolic link already exists. Skipping link creation."
+                else
+                    sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
+                fi
+                
           # JMeter - Run the Endurance Test Suite
           - task: Bash@3
             displayName: Endurance Test
@@ -231,7 +243,7 @@ stages:
               PathtoPublish: 'automatedtesting/jmeter/report'
               ArtifactName: 'jmeter-results'
               publishLocation: 'Container'
-              
+
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
   - deployment: VMDeploy
@@ -253,60 +265,70 @@ stages:
               script: |
                 #! /bin/bash
 
-                # Update and install necessary packages in one go
-                sudo apt update && sudo apt install -y \
-                  software-properties-common \
-                  python3.7 \
-                  python3.7-venv \
-                  python3-pip \
-                  unzip \
-                  chromium-browser \
-                  libnss3 \
-                  libgconf-2-4 \
-                  libxi6 \
-                  libxss1 \
-                  libappindicator1 \
-                  libindicator7 \
-                  fonts-liberation \
-                  xdg-utils
+                # Uninstall chromium-browser if it is installed
+                sudo apt-get remove -y chromium-browser
 
-                # Add deadsnakes PPA and update package list
-                sudo add-apt-repository -y ppa:deadsnakes/ppa
-                sudo apt update
+                # Install dependencies
+                sudo apt install python3.7 -y
+                sudo apt-get install python3.7-venv -y
+                sudo apt-get install python3-pip -y
+                sudo apt-get install unzip -y
+                sudo apt-get install wget -y
+                sudo apt-get install -y libxss1 libappindicator1 libindicator7
+
+                # Download and install Google Chrome
+                wget -P /tmp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+                sudo apt install -y /tmp/google-chrome-stable_current_amd64.deb
+                rm /tmp/google-chrome-stable_current_amd64.deb
 
                 # Set up app directory
-                APP_DIR="/home/azureuser/app"
-                mkdir -p $APP_DIR
-
-                # Move and unzip the test files
-                mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip $APP_DIR
-                cd $APP_DIR
-                unzip -o $(Build.BuildId)-uitests.zip
-
-                # Download the chromedriver version for the installed Chromium version
-                CHROME_VERSION=$(chromium-browser --version | grep -oP '\d+\.\d+\.\d+')
-                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
-                if [ ! -f "$APP_DIR/$CHROMEDRIVER_ZIP" ]; then
-                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-                    wget -O $CHROMEDRIVER_ZIP https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
-                    unzip -o $CHROMEDRIVER_ZIP
-                    sudo rm -f /usr/local/bin/chromedriver  # Remove existing symlink if it exists
-                    sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
+                cd ~/
+                DIR=/home/azureuser/app
+                if [ ! -d "$DIR" ]; then
+                    mkdir app
                 fi
 
+                mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
+                cd app
+                unzip -o $(Build.BuildId)-uitests.zip
+
+                # Determine installed Chrome version
+                CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+' | head -1)
+
+                # Download the matching chromedriver version
+                FILE=/home/azureuser/app/chromedriver_linux64.zip
+                if [ ! -f "$FILE" ]; then
+                    # Fetch the latest ChromeDriver version that matches the installed Chrome version
+                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+                    wget "https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip"
+                    unzip -o chromedriver_linux64.zip
+                fi
+
+                # Remove existing chromedriver symbolic link if it exists
+                if [ -L /usr/local/bin/chromedriver ]; then
+                    sudo rm /usr/local/bin/chromedriver
+                fi
+
+                # Create a new symbolic link for chromedriver
+                sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
+
                 # Add chromedriver to PATH
-                export PATH=$PATH:$APP_DIR
+                export PATH=$PATH:/home/azureuser/app
 
                 # Make virtual environment
                 python3.7 -m venv venv
                 source venv/bin/activate
 
-                # Install selenium
-                pip3 install selenium
+                # Install selenium using the virtual environment's pip
+                pip install selenium
+
+                # Log Chrome and ChromeDriver versions for debugging
+                google-chrome --version
+                chromedriver --version
 
                 # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
-                python3 add_remove_from_cart.py >> selenium.log
+                python add_remove_from_cart.py >> selenium.log
                 echo "Completed Selenium Tests. Check selenium.log for results."
 
           - task: PublishTestResults@2
