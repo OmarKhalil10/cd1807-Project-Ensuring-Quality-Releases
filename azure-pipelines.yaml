@@ -152,7 +152,7 @@ stages:
   - deployment: FakeRestAPI
     pool:
       vmImage: 'Ubuntu-16.04'
-    environment: "$(environmentName)"
+    environment: "test-vm"
     strategy:
       runOnce:
         deploy:
@@ -222,7 +222,7 @@ stages:
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: "$(environmentName)"
+      name: "test-vm"
       resourceType: VirtualMachine
     strategy:
       runOnce:
