@@ -64,7 +64,7 @@
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get Books" enabled="true">
           <intProp name="HTTPSampler.concurrentPool">6</intProp>
-          <stringProp name="HTTPSampler.domain">web-app-project-3.azurewebsites.net</stringProp>
+          <stringProp name="HTTPSampler.domain">myapplication-appservice.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.path">/api/Books</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -78,7 +78,7 @@
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Post Books" enabled="true">
           <intProp name="HTTPSampler.concurrentPool">6</intProp>
-          <stringProp name="HTTPSampler.domain">web-app-project-3.azurewebsites.net</stringProp>
+          <stringProp name="HTTPSampler.domain">myapplication-appservice.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.path">/api/Books</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -92,7 +92,7 @@
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get Book" enabled="true">
           <intProp name="HTTPSampler.concurrentPool">6</intProp>
-          <stringProp name="HTTPSampler.domain">web-app-project-3.azurewebsites.net</stringProp>
+          <stringProp name="HTTPSampler.domain">myapplication-appservice.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.path">/api/Books/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -114,7 +114,7 @@
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Delete Book" enabled="true">
           <intProp name="HTTPSampler.concurrentPool">6</intProp>
-          <stringProp name="HTTPSampler.domain">myapplication-appservice-2308.azurewebsites.net</stringProp>
+          <stringProp name="HTTPSampler.domain">myapplication-appservice.azurewebsites.net</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.path">/api/Books/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -151,7 +151,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="hostname" elementType="Argument">
             <stringProp name="Argument.name">hostname</stringProp>
-            <stringProp name="Argument.value">myapplication-appservice-2308.azurewebsites.net</stringProp>
+            <stringProp name="Argument.value">myapplication-appservice.azurewebsites.net</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
