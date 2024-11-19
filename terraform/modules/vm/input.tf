@@ -1,66 +1,24 @@
-
-variable "resource_group_name" {
-  description = "The name of the resource group."
-  type        = string
-  default     = "example-resource-group"
-}
-
+# Resource Group/Location
 variable "location" {
-  description = "The Azure region where resources will be created."
-  type        = string
-  default     = "East US"  # Change to your preferred location
+    type          = string
+}
+variable "resource_group" {
+    type          = string
 }
 
-variable "vnet_name" {
-  description = "The name of the virtual network."
-  type        = string
-  default     = "example-vnet"
+# Resource Virtual Machine
+variable "application_type" {
+    type          = string
 }
-
-variable "subnet_name" {
-  description = "The name of the subnet."
-  type        = string
-  default     = "example-subnet"
+variable "resource_type" {
+    type          = string
 }
-
-variable "public_ip_name" {
-  description = "The name of the public IP."
-  type        = string
-  default     = "example-public-ip"
+variable "public_ip_address_id" {
+    type          = string
 }
-
-variable "network_interface_name" {
-  description = "The name of the network interface."
-  type        = string
-  default     = "example-nic"
+variable "public_subnet_id" {
+    type          = string
 }
-
-variable "vm_name" {
-  description = "The name of the virtual machine."
-  type        = string
-  default     = "example-vm"
-}
-
 variable "admin_username" {
-  description = "The admin username for the virtual machine."
-  type        = string
-  default     = "adminuser"
-}
-
-variable "ssh_public_key_path" {
-  description = "The path to the SSH public key."
-  type        = string
-  default     = "/c/Users/a923717/.ssh/id_rsa.pub"  # Ensure this path is correct
-}
-
-variable "vm_size" {
-  description = "The size of the virtual machine."
-  type        = string
-  default     = "Standard_DS2_v2"
-}
-
-variable "os_disk_size_gb" {
-  description = "The size of the OS disk in GB."
-  type        = number
-  default     = 30  # Specify the disk size
+    type          = string
 }
