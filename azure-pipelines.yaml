@@ -175,7 +175,8 @@ stages:
               script: |
                 wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
                 tar -xvzf apache-jmeter-5.6.3.tgz
-                export PATH=$PATH:$PWD/apache-jmeter-5.6.3/bin
+                sudo mv apache-jmeter-5.6.3 /opt/
+                sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
 
           # JMeter - Run the Endurance Test Suite
           - task: Bash@3
@@ -238,44 +239,44 @@ stages:
               script: |
                 #! /bin/bash
 
+                # Update and install necessary packages in one go
+                sudo apt update && sudo apt install -y \
+                  software-properties-common \
+                  python3.7 \
+                  python3.7-venv \
+                  python3-pip \
+                  unzip \
+                  chromium-browser
+
+                # Add deadsnakes PPA and update package list
+                sudo add-apt-repository -y ppa:deadsnakes/ppa
                 sudo apt update
-                sudo apt install software-properties-common
-                sudo add-apt-repository ppa:deadsnakes/ppa
-                sudo apt update
-                sudo apt install python3.7
-                sudo apt-get install python3.7-venv
-                sudo apt-get install python3-pip -y
-                sudo apt-get install unzip -y
-                sudo apt-get install -y chromium-browser
 
                 # Set up app directory
-                cd ~/
-                DIR=/home/azureuser/app
-                if [ ! -d "$DIR" ]; then
-                    mkdir app
-                fi
+                APP_DIR="/home/azureuser/app"
+                mkdir -p $APP_DIR
 
-                mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
-                cd app
+                # Move and unzip the test files
+                mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip $APP_DIR
+                cd $APP_DIR
                 unzip -o $(Build.BuildId)-uitests.zip
 
                 # Download the chromedriver version for the installed Chromium version (130.0.6723.116)
                 CHROME_VERSION="130.0.6723.116"
-                FILE=/home/azureuser/app/chromedriver_linux64.zip
-                if [ ! -f "$FILE" ]; then
-                    # Fetch the latest chromedriver version for Chrome 130
+                CHROMEDRIVER_ZIP="chromedriver_linux64.zip"
+                if [ ! -f "$APP_DIR/$CHROMEDRIVER_ZIP" ]; then
                     LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_130")
-                    wget https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
-                    unzip -o chromedriver_linux64.zip
+                    wget -O $CHROMEDRIVER_ZIP https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip
+                    unzip -o $CHROMEDRIVER_ZIP
                     sudo rm -f /usr/local/bin/chromedriver  # Remove existing symlink if it exists
                     sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
                 fi
 
                 # Add chromedriver to PATH
-                export PATH=$PATH:/home/azureuser/app
+                export PATH=$PATH:$APP_DIR
 
                 # Make virtual environment
-                python3 -m venv venv
+                python3.7 -m venv venv
                 source venv/bin/activate
 
                 # Install selenium
