@@ -152,7 +152,7 @@ stages:
   - deployment: FakeRestAPI
     pool:
       name: 'myAgentPool'
-    environment: "test-vm"
+    environment: "VM-myApplication"
     strategy:
       runOnce:
         deploy:
@@ -249,7 +249,7 @@ stages:
   - deployment: VMDeploy
     displayName: Selenium Tests
     environment:
-      name: "test-vm"
+      name: "VM-myApplication"
       resourceType: VirtualMachine
     strategy:
       runOnce:
