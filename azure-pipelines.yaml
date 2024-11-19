@@ -101,7 +101,6 @@ stages:
     #     mergeTestResults: true
     #     testRunTitle: 'Postman Tests'
 
-
     #--------------------------------------------#
     # Selenium (UI) Test Suite - Archive the package  
     - task: ArchiveFiles@2
@@ -121,7 +120,7 @@ stages:
     - task: ArchiveFiles@2
       displayName: 'Archive FakeRestAPI'
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/jmeter/fakerestapi'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/fakerestapi'
         includeRootFolder: false
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-fakerestapi.zip'
@@ -134,7 +133,7 @@ stages:
     - task: ArchiveFiles@2
       displayName: 'Archive PerformanceTestSuite'
       inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/jmeter/test-suite'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/automatedtesting/jmeter'
         includeRootFolder: false
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-perftests.zip'
@@ -182,7 +181,6 @@ stages:
               appName: 'myApplication-AppService'
               appType: webApp
               package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
-              deploymentMethod: zipDeploy
           
           # Install Java
           - task: Bash@3
@@ -226,10 +224,10 @@ stages:
               targetType: 'inline'
               script: |
                 source /etc/environment
-                mkdir -p log/jmeter
-                mkdir -p log/jmeter/html-report
-                jmeter -n -t automatedtesting/jmeter/test-suite/EnduranceTest.jmx -j log/jmeter/jmeter-endurance-test.log -f -e -o log/jmeter/html-report -l log/jmeter/stress-endurance-result.csv
-              workingDirectory: $(System.DefaultWorkingDirectory)
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/endurancepages.csv" \
+                  -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
+                  -e -o "automatedtesting/jmeter/endurancereport"
 
           # Run the JMeter Stress Test Suite
           - task: Bash@3
@@ -238,25 +236,28 @@ stages:
               targetType: 'inline'
               script: |
                 source /etc/environment
-                jmeter -n -t automatedtesting/jmeter/test-suite/StressTest.jmx -j log/jmeter/jmeter-stress-test.log -f -e -o log/jmeter/html-report -l log/jmeter/stress-test-result.csv
-              workingDirectory: $(System.DefaultWorkingDirectory)
+                jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" \
+                  -Jresdir="automatedtesting/jmeter/stresspages.csv" \
+                  -l "automatedtesting/jmeter/report/stressresults.jtl" \
+                  -e -o "automatedtesting/jmeter/stressreport"
 
           # Archive the JMeter log files
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/log/jmeter/html-report'
+              rootFolderOrFile: "automatedtesting/jmeter/report"
               includeRootFolder: false
               archiveType: "zip"
-              archiveFile: '$(System.DefaultWorkingDirectory)/log/jmeter/html-report-$(Build.BuildId).zip'
+              archiveFile: "jmeter-reports-$(Build.BuildId).zip"
               verbose: true
 
           # Publish the JMeter log files
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: '$(System.DefaultWorkingDirectory)/log/jmeter'
+              PathtoPublish: 'automatedtesting/jmeter/report'
               ArtifactName: 'jmeter-results'
+              publishLocation: 'Container'
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
