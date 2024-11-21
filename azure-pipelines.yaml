@@ -36,9 +36,9 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
         backendAzureRmResourceGroupName: 'Azuredevops'
-        backendAzureRmStorageAccountName: 'tfstate870815323'
+        backendAzureRmStorageAccountName: 'tfstate2279711211'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: 'P1XeboPdNN9vV2sBvprKH8wBKI7VKkRcHb+wCFqRTySocUyN+Jlh2sy5d/NzR4/5v2NAWt1PKe5O+AStrK6BiA=='
+        backendAzureRmKey: 'V9yzmLAEA/wSTISPorzzmOwIwUGKBxTswGVhcEH0nV/0TiEx2peAtW/UuE3Du6WMoYumY6L0Wf4t+AStPZWCgw=='
     
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
