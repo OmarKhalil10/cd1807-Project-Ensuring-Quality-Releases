@@ -173,14 +173,14 @@ stages:
               fi
             displayName: 'Check Artifact Accessibility'
 
-          # Deploy the Azure Web App
-          - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App'
-            inputs:
-              azureSubscription: '$(azureServiceConnectionId)'
-              appName: 'myApplication-AppService'
-              appType: webApp
-              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
+          # # Deploy the Azure Web App
+          # - task: AzureWebApp@1
+          #   displayName: 'Deploy Azure Web App'
+          #   inputs:
+          #     azureSubscription: '$(azureServiceConnectionId)'
+          #     appName: 'myApplication-AppService'
+          #     appType: webApp
+          #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
           
           # Install Java
           - task: Bash@3
