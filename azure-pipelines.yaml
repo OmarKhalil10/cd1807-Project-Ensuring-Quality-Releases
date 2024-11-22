@@ -224,9 +224,9 @@ stages:
               targetType: 'inline'
               script: |
                 source /etc/environment
-                jmeter -n -t "automatedtesting/jmeter/EnduranceTestSuite.jmx" \
-                  -Jresdir="automatedtesting/jmeter/endurancepages.csv" \
-                  -l "automatedtesting/jmeter/report/enduranceresults.jtl" \
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/enduranceresults.jtl" \
                   -e -o "automatedtesting/jmeter/endurancereport"
 
           # Run the JMeter Stress Test Suite
@@ -236,16 +236,16 @@ stages:
               targetType: 'inline'
               script: |
                 source /etc/environment
-                jmeter -n -t "automatedtesting/jmeter/StressTestSuite.jmx" \
-                  -Jresdir="automatedtesting/jmeter/stresspages.csv" \
-                  -l "automatedtesting/jmeter/report/stressresults.jtl" \
+                jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/stressresults.jtl" \
                   -e -o "automatedtesting/jmeter/stressreport"
 
           # Archive the JMeter log files
           - task: ArchiveFiles@2
             displayName: Archive JMeter Log Files
             inputs:
-              rootFolderOrFile: "automatedtesting/jmeter/report"
+              rootFolderOrFile: "automatedtesting/jmeter"
               includeRootFolder: false
               archiveType: "zip"
               archiveFile: "jmeter-reports-$(Build.BuildId).zip"
@@ -255,10 +255,9 @@ stages:
           - task: PublishBuildArtifacts@1
             displayName: Publish JMeter Artifacts
             inputs:
-              PathtoPublish: 'automatedtesting/jmeter/report'
+              PathtoPublish: 'automatedtesting/jmeter'
               ArtifactName: 'jmeter-results'
-              publishLocation: 'Container'
-
+              
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
   - deployment: VMDeploy

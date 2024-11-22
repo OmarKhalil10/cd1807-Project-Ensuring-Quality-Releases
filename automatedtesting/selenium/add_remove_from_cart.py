@@ -38,14 +38,14 @@ def add_cart(driver):
         for product in product_elements:
             product_name = product.find_element(By.CSS_SELECTOR, ".inventory_item_name").text
             product.find_element(By.CSS_SELECTOR, ".btn_inventory").click()
-            print(timestamp() + f"Product '{product_name}' added to the cart.")
+            print(timestamp() + "Product '{}' added to the cart.".format(product_name))
 
         cart_count = int(driver.find_element(By.CSS_SELECTOR, ".shopping_cart_badge").text)
         assert cart_count == len(product_elements), 'The cart count is incorrect.'
         print(timestamp() + 'All products added successfully. Cart count = ' + str(cart_count))
     
     except Exception as e:
-        print(timestamp() + f'Error while adding products: {e}')
+        print(timestamp() + 'Error while adding products: {}'.format(e))
 
 # Remove items from the cart
 def remove_cart(driver):
