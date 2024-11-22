@@ -278,11 +278,12 @@ stages:
               targetType: 'inline'
               script: |
                 #!/bin/bash
-                
+
                 # Upgrade and install dependencies
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
                 sudo apt-get install -y python3.7
+                sudo apt-get install -y chromium-browser
                 
                 # Install virtualenv for Python3 if not already installed
                 sudo apt-get install -y python3.7-venv
