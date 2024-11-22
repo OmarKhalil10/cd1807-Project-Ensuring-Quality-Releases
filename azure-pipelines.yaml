@@ -19,26 +19,27 @@ stages:
     pool:
       name: myAgentPool
     steps:
+
     #--------------------------------------------#  
     # Use Terraform to create the Infrastructure      
     # Install Terraform on the pipeline agent 
-    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-    #   displayName: 'Terraform installation'
-    #   inputs:
-    #     terraformVersion: '1.6.3'
+    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+      displayName: 'Terraform installation'
+      inputs:
+        terraformVersion: '1.6.3'
 
-    # # Run Terraform Init on the pipeline agent 
-    # - task: TerraformTaskV4@4
-    #   displayName: 'Terraform init'
-    #   inputs:
-    #     provider: 'azurerm'
-    #     command: 'init'
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-    #     backendServiceArm: 'myServiceConnection'
-    #     backendAzureRmResourceGroupName: 'Azuredevops'
-    #     backendAzureRmStorageAccountName: 'tfstate2330325985'
-    #     backendAzureRmContainerName: 'tfstate'
-    #     backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
+    # Run Terraform Init on the pipeline agent 
+    - task: TerraformTaskV4@4
+      displayName: 'Terraform init'
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        backendServiceArm: 'myServiceConnection'
+        backendAzureRmResourceGroupName: 'Azuredevops'
+        backendAzureRmStorageAccountName: 'tfstate2330325985'
+        backendAzureRmContainerName: 'tfstate'
+        backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
     
     # # Run Terraform validate on the pipeline agent 
     # - task: TerraformTaskV4@4
@@ -60,12 +61,12 @@ stages:
     # ToDo: Change the workingDirectory path, as applicable to you
     # Destroy the resources in Azure by running a separate pipeline. 
     - task: TerraformTaskV3@3
-      displayName: Terraform destroy
-      inputs:
-        provider: 'azurerm'
-        command: 'destroy'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+    displayName: Terraform destroy
+    inputs:
+      provider: 'azurerm'
+      command: 'destroy'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+      environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     #--------------------------------------------#   
     # Install Node.js
@@ -192,81 +193,81 @@ stages:
           #     appType: webApp
           #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
           
-          # # Install Java
-          # - task: Bash@3
-          #   displayName: Install Java
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       sudo apt update
-          #       sudo apt install -y openjdk-11-jdk
-          #       echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
-          #       source /etc/environment
-          #       echo "Java installed and JAVA_HOME set to $JAVA_HOME"
+          # Install Java
+          - task: Bash@3
+            displayName: Install Java
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt update
+                sudo apt install -y openjdk-11-jdk
+                echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
+                source /etc/environment
+                echo "Java installed and JAVA_HOME set to $JAVA_HOME"
 
-          # # Jmeter installation
-          # - task: Bash@3
-          #   displayName: Install JMeter
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
-          #       tar -xvzf apache-jmeter-5.6.3.tgz
+          # Jmeter installation
+          - task: Bash@3
+            displayName: Install JMeter
+            inputs:
+              targetType: 'inline'
+              script: |
+                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
+                tar -xvzf apache-jmeter-5.6.3.tgz
                 
-          #       # Check if the JMeter directory already exists
-          #       if [ -d "/opt/apache-jmeter-5.6.3" ]; then
-          #           echo "JMeter directory already exists. Skipping move."
-          #       else
-          #           sudo mv apache-jmeter-5.6.3 /opt/
-          #       fi
+                # Check if the JMeter directory already exists
+                if [ -d "/opt/apache-jmeter-5.6.3" ]; then
+                    echo "JMeter directory already exists. Skipping move."
+                else
+                    sudo mv apache-jmeter-5.6.3 /opt/
+                fi
                 
-          #       # Check if the symbolic link already exists
-          #       if [ -L /usr/local/bin/jmeter ]; then
-          #           echo "JMeter symbolic link already exists. Skipping link creation."
-          #       else
-          #           sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
-          #       fi
+                # Check if the symbolic link already exists
+                if [ -L /usr/local/bin/jmeter ]; then
+                    echo "JMeter symbolic link already exists. Skipping link creation."
+                else
+                    sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
+                fi
                 
-          # # JMeter - Run the Endurance Test Suite
-          # - task: Bash@3
-          #   displayName: Endurance Test
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       source /etc/environment
-          #       jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
-          #         -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-          #         -l "automatedtesting/jmeter/enduranceresults.jtl" \
-          #         -e -o "automatedtesting/jmeter/endurancereport"
+          # JMeter - Run the Endurance Test Suite
+          - task: Bash@3
+            displayName: Endurance Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                source /etc/environment
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/enduranceresults.jtl" \
+                  -e -o "automatedtesting/jmeter/endurancereport"
 
-          # # Run the JMeter Stress Test Suite
-          # - task: Bash@3
-          #   displayName: Stress Test
-          #   inputs:
-          #     targetType: 'inline'
-          #     script: |
-          #       source /etc/environment
-          #       jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
-          #         -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-          #         -l "automatedtesting/jmeter/stressresults.jtl" \
-          #         -e -o "automatedtesting/jmeter/stressreport"
+          # Run the JMeter Stress Test Suite
+          - task: Bash@3
+            displayName: Stress Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                source /etc/environment
+                jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/stressresults.jtl" \
+                  -e -o "automatedtesting/jmeter/stressreport"
 
-          # # Archive the JMeter log files
-          # - task: ArchiveFiles@2
-          #   displayName: Archive JMeter Log Files
-          #   inputs:
-          #     rootFolderOrFile: "automatedtesting/jmeter"
-          #     includeRootFolder: false
-          #     archiveType: "zip"
-          #     archiveFile: "jmeter-reports-$(Build.BuildId).zip"
-          #     verbose: true
+          # Archive the JMeter log files
+          - task: ArchiveFiles@2
+            displayName: Archive JMeter Log Files
+            inputs:
+              rootFolderOrFile: "automatedtesting/jmeter"
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "jmeter-reports-$(Build.BuildId).zip"
+              verbose: true
 
-          # # Publish the JMeter log files
-          # - task: PublishBuildArtifacts@1
-          #   displayName: Publish JMeter Artifacts
-          #   inputs:
-          #     PathtoPublish: 'automatedtesting/jmeter'
-          #     ArtifactName: 'jmeter-results'
+          # Publish the JMeter log files
+          - task: PublishBuildArtifacts@1
+            displayName: Publish JMeter Artifacts
+            inputs:
+              PathtoPublish: 'automatedtesting/jmeter'
+              ArtifactName: 'jmeter-results'
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
