@@ -320,15 +320,6 @@ stages:
                 # Determine installed Chrome version
                 CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+' | head -1)
 
-                # Download the matching chromedriver version
-                FILE=/home/azureuser/app/chromedriver_linux64.zip
-                if [ ! -f "$FILE" ]; then
-                    # Fetch the latest ChromeDriver version that matches the installed Chrome version
-                    LATEST=$(wget -q -O - "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-                    wget "https://chromedriver.storage.googleapis.com/$LATEST/chromedriver_linux64.zip"
-                    unzip -o chromedriver_linux64.zip
-                fi
-
                 # Remove existing chromedriver symbolic link if it exists
                 if [ -L /usr/local/bin/chromedriver ]; then
                     sudo rm /usr/local/bin/chromedriver
