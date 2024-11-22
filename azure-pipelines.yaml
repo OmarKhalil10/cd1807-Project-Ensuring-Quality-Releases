@@ -317,24 +317,6 @@ stages:
                 cd app
                 unzip -o $(Build.BuildId)-uitests.zip
 
-                # Determine installed Chrome version
-                CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+' | head -1)
-
-                # Remove existing chromedriver symbolic link if it exists
-                if [ -L /usr/local/bin/chromedriver ]; then
-                    sudo rm /usr/local/bin/chromedriver
-                fi
-
-                # Create a new symbolic link for chromedriver
-                sudo ln -s $PWD/chromedriver /usr/local/bin/chromedriver
-
-                # Add chromedriver to PATH
-                export PATH=$PATH:/home/azureuser/app
-
-                # Log Chrome and ChromeDriver versions for debugging
-                google-chrome --version
-                chromedriver --version
-
                 # Starting Selenium tests using the virtual environment's Python
                 echo "Starting Selenium Tests"
                 python add_remove_from_cart.py >> selenium.log
@@ -342,7 +324,6 @@ stages:
 
                 # Deactivate virtual environment
                 deactivate
-
 
           - task: PublishTestResults@2
             inputs:
