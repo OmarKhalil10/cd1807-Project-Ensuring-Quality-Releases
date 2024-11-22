@@ -13,13 +13,23 @@ resource "azurerm_windows_web_app" "test" {
   service_plan_id     = azurerm_service_plan.test.id
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = 0
+    "WEBSITE_RUN_FROM_PACKAGE" = "0"
   }
+
   site_config {
     always_on = false
-    application_stack{
+    application_stack {
       current_stack = "dotnet"
       dotnet_version = "v4.0"
     }
+
+    # If you need to configure a virtual application, you can add it like this:
+    virtual_application {
+      virtual_path  = "/"
+      physical_path = "site\\wwwroot"
+      preload       = false
+    }
+
+    # If virtual application configuration is not needed, you can omit the above block
   }
 }
