@@ -20,62 +20,53 @@ stages:
       name: myAgentPool
     steps:
 
-    #--------------------------------------------#  
-    # Use Terraform to create the Infrastructure      
-    # Install Terraform on the pipeline agent 
-    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-      displayName: 'Terraform installation'
-      inputs:
-        terraformVersion: '1.6.3'
+    # #--------------------------------------------#  
+    # # Use Terraform to create the Infrastructure      
+    # # Install Terraform on the pipeline agent 
+    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    #   displayName: 'Terraform installation'
+    #   inputs:
+    #     terraformVersion: '1.6.3'
 
-    # Run Terraform Init on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: 'Terraform init'
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        backendServiceArm: 'myServiceConnection'
-        backendAzureRmResourceGroupName: 'Azuredevops'
-        backendAzureRmStorageAccountName: 'tfstate2330325985'
-        backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
-    
-    # Run Terraform validate on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: Terraform validate
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-
-    - task: TerraformTaskV4@4
-      displayName: Terraform apply
-      inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
-        # Adding the auto-approve flag to bypass manual approval (optional)
-        vars: |
-          TF_VAR_example_variable=example_value
-        # Optionally disable locking (if required)
-        # lock: false  # Use with caution, this is not recommended for production
-        # If you're using a backend for state management, you could configure that as well
-        backendServiceArm: '$(azureServiceConnectionId)'  # Optional if you're using a backend for state
-        # Additional optional input: 
-        # set -auto-approve for automatic approval (use with caution in production)
-        additionalArgs: '-auto-approve'  # This will auto-approve changes without manual intervention
-    
-    # ToDo: Change the workingDirectory path, as applicable to you
-    # Destroy the resources in Azure by running a separate pipeline. 
-    # - task: TerraformTaskV3@3
-    #   displayName: Terraform destroy
+    # # Run Terraform Init on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: 'Terraform init'
     #   inputs:
     #     provider: 'azurerm'
-    #     command: 'destroy'
+    #     command: 'init'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    #     backendServiceArm: 'myServiceConnection'
+    #     backendAzureRmResourceGroupName: 'Azuredevops'
+    #     backendAzureRmStorageAccountName: 'tfstate2330325985'
+    #     backendAzureRmContainerName: 'tfstate'
+    #     backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
+    
+    # # Run Terraform validate on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform validate
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'validate'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+
+    # # Run Terraform Apply
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform apply
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'apply'
     #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
     #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+
+    # ToDo: Change the workingDirectory path, as applicable to you
+    # Destroy the resources in Azure by running a separate pipeline. 
+    - task: TerraformTaskV3@3
+      displayName: Terraform destroy
+      inputs:
+        provider: 'azurerm'
+        command: 'destroy'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     #--------------------------------------------#   
     # Install Node.js
