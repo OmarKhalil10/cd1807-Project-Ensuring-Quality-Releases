@@ -44,13 +44,13 @@ module "nsg-test" {
   address_prefix_test = var.address_prefix_test
 }
 
-# module "appservice" {
-#   source           = "../../modules/appservice"
-#   location         = var.location
-#   application_type = var.application_type
-#   resource_type    = "AppService"
-#   resource_group   = module.resource_group.resource_group_name  # Use the output name
-# }
+module "appservice" {
+  source           = "../../modules/appservice"
+  location         = var.location
+  application_type = var.application_type
+  resource_type    = "AppService"
+  resource_group   = module.resource_group.resource_group_name  # Use the output name
+}
 
 module "publicip" {
   source           = "../../modules/publicip"
