@@ -22,40 +22,40 @@ stages:
     #--------------------------------------------#  
     # Use Terraform to create the Infrastructure      
     # Install Terraform on the pipeline agent 
-    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-      displayName: 'Terraform installation'
-      inputs:
-        terraformVersion: '1.6.3'
+    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    #   displayName: 'Terraform installation'
+    #   inputs:
+    #     terraformVersion: '1.6.3'
 
-    # Run Terraform Init on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: 'Terraform init'
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        backendServiceArm: 'myServiceConnection'
-        backendAzureRmResourceGroupName: 'Azuredevops'
-        backendAzureRmStorageAccountName: 'tfstate2330325985'
-        backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
+    # # Run Terraform Init on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: 'Terraform init'
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'init'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    #     backendServiceArm: 'myServiceConnection'
+    #     backendAzureRmResourceGroupName: 'Azuredevops'
+    #     backendAzureRmStorageAccountName: 'tfstate2330325985'
+    #     backendAzureRmContainerName: 'tfstate'
+    #     backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
     
-    # Run Terraform validate on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: Terraform validate
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    # # Run Terraform validate on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform validate
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'validate'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
-    # Run Terraform Apply
-    - task: TerraformTaskV4@4
-      displayName: Terraform apply
-      inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+    # # Run Terraform Apply
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform apply
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'apply'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     #--------------------------------------------#   
     # Install Node.js
@@ -257,7 +257,7 @@ stages:
             inputs:
               PathtoPublish: 'automatedtesting/jmeter'
               ArtifactName: 'jmeter-results'
-              
+
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
   - deployment: VMDeploy
