@@ -278,10 +278,7 @@ stages:
               targetType: 'inline'
               script: |
                 #!/bin/bash
-
-                # Uninstall chromium-browser if it is installed
-                sudo apt-get remove -y chromium-browser
-
+                
                 # Upgrade and install dependencies
                 sudo apt-get update -y
                 sudo apt-get upgrade -y
