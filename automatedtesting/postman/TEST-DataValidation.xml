@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="Data Validation Test Suite" tests="1" time="0.497">
-  <testsuite name="Validate Create Author Response" id="bd9f0b3b-1bcc-4862-8c92-099d80a18d2d" timestamp="2024-11-19T03:02:56.567Z" tests="2" failures="0" errors="0" time="0.497">
-    <testcase name="Response has id" time="0.497" classname="ValidateCreateAuthorResponse"/>
-    <testcase name="First name is Jane" time="0.497" classname="ValidateCreateAuthorResponse"/>
+<testsuites name="Data Validation Test Suite" tests="1" time="0.528">
+  <testsuite name="Validate Create Author Response" id="8c64ea63-c71f-43f6-9844-7106b787b995" timestamp="2024-11-22T14:47:28.322Z" tests="2" failures="0" errors="0" time="0.528">
+    <testcase name="Response has id" time="0.528" classname="ValidateCreateAuthorResponse"/>
+    <testcase name="First name is Jane" time="0.528" classname="ValidateCreateAuthorResponse"/>
   </testsuite>
 </testsuites>
