@@ -154,191 +154,191 @@ stages:
       displayName: 'Upload Package'
       artifact: drop-perftests
 
-# #--------------------------------------------#  
-# # DEPLOYMENT STAGE
-# #--------------------------------------------#    
-# - stage: Deploy
-#   jobs:
-#   #--------------------------------------------#  
-#   # Deploy FakeRestAPI Web App
-#   - deployment: FakeRestAPI
-#     pool:
-#       name: 'myAgentPool'
-#     environment: "test-vm"
-#     strategy:
-#       runOnce:
-#         deploy:
-#           steps:
-#           # Debugging step to print variables
-#           - script: |
-#               echo "Azure Service Connection ID: $(azureServiceConnectionId)"
-#               echo "App Name: myApplication-AppService"
-#               echo "Package Path: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip"
-#             displayName: 'Print Variables'
+#--------------------------------------------#  
+# DEPLOYMENT STAGE
+#--------------------------------------------#    
+- stage: Deploy
+  jobs:
+  #--------------------------------------------#  
+  # Deploy FakeRestAPI Web App
+  - deployment: FakeRestAPI
+    pool:
+      name: 'myAgentPool'
+    environment: "test-vm"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Debugging step to print variables
+          - script: |
+              echo "Azure Service Connection ID: $(azureServiceConnectionId)"
+              echo "App Name: myApplication-AppService"
+              echo "Package Path: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip"
+            displayName: 'Print Variables'
 
-#           # Debugging step to check artifact accessibility
-#           - script: |
-#               if [ -f "$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip" ]; then
-#                 echo "Artifact exists and is accessible."
-#               else
-#                 echo "Artifact does not exist or is not accessible."
-#               fi
-#             displayName: 'Check Artifact Accessibility'
+          # Debugging step to check artifact accessibility
+          - script: |
+              if [ -f "$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip" ]; then
+                echo "Artifact exists and is accessible."
+              else
+                echo "Artifact does not exist or is not accessible."
+              fi
+            displayName: 'Check Artifact Accessibility'
 
-#           # # Deploy the Azure Web App
-#           # - task: AzureWebApp@1
-#           #   displayName: 'Deploy Azure Web App'
-#           #   inputs:
-#           #     azureSubscription: '$(azureServiceConnectionId)'
-#           #     appName: 'myApplication-AppService'
-#           #     appType: webApp
-#           #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
+          # Deploy the Azure Web App
+          - task: AzureWebApp@1
+            displayName: 'Deploy Azure Web App'
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              appName: 'myApplication-AppService'
+              appType: webApp
+              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
           
-#           # Install Java
-#           - task: Bash@3
-#             displayName: Install Java
-#             inputs:
-#               targetType: 'inline'
-#               script: |
-#                 sudo apt update
-#                 sudo apt install -y openjdk-11-jdk
-#                 echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
-#                 source /etc/environment
-#                 echo "Java installed and JAVA_HOME set to $JAVA_HOME"
+          # Install Java
+          - task: Bash@3
+            displayName: Install Java
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt update
+                sudo apt install -y openjdk-11-jdk
+                echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
+                source /etc/environment
+                echo "Java installed and JAVA_HOME set to $JAVA_HOME"
 
-#           # Jmeter installation
-#           - task: Bash@3
-#             displayName: Install JMeter
-#             inputs:
-#               targetType: 'inline'
-#               script: |
-#                 wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
-#                 tar -xvzf apache-jmeter-5.6.3.tgz
+          # Jmeter installation
+          - task: Bash@3
+            displayName: Install JMeter
+            inputs:
+              targetType: 'inline'
+              script: |
+                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
+                tar -xvzf apache-jmeter-5.6.3.tgz
                 
-#                 # Check if the JMeter directory already exists
-#                 if [ -d "/opt/apache-jmeter-5.6.3" ]; then
-#                     echo "JMeter directory already exists. Skipping move."
-#                 else
-#                     sudo mv apache-jmeter-5.6.3 /opt/
-#                 fi
+                # Check if the JMeter directory already exists
+                if [ -d "/opt/apache-jmeter-5.6.3" ]; then
+                    echo "JMeter directory already exists. Skipping move."
+                else
+                    sudo mv apache-jmeter-5.6.3 /opt/
+                fi
                 
-#                 # Check if the symbolic link already exists
-#                 if [ -L /usr/local/bin/jmeter ]; then
-#                     echo "JMeter symbolic link already exists. Skipping link creation."
-#                 else
-#                     sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
-#                 fi
+                # Check if the symbolic link already exists
+                if [ -L /usr/local/bin/jmeter ]; then
+                    echo "JMeter symbolic link already exists. Skipping link creation."
+                else
+                    sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
+                fi
                 
-#           # JMeter - Run the Endurance Test Suite
-#           - task: Bash@3
-#             displayName: Endurance Test
-#             inputs:
-#               targetType: 'inline'
-#               script: |
-#                 source /etc/environment
-#                 jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
-#                   -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-#                   -l "automatedtesting/jmeter/enduranceresults.jtl" \
-#                   -e -o "automatedtesting/jmeter/endurancereport"
+          # JMeter - Run the Endurance Test Suite
+          - task: Bash@3
+            displayName: Endurance Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                source /etc/environment
+                jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/enduranceresults.jtl" \
+                  -e -o "automatedtesting/jmeter/endurancereport"
 
-#           # Run the JMeter Stress Test Suite
-#           - task: Bash@3
-#             displayName: Stress Test
-#             inputs:
-#               targetType: 'inline'
-#               script: |
-#                 source /etc/environment
-#                 jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
-#                   -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-#                   -l "automatedtesting/jmeter/stressresults.jtl" \
-#                   -e -o "automatedtesting/jmeter/stressreport"
+          # Run the JMeter Stress Test Suite
+          - task: Bash@3
+            displayName: Stress Test
+            inputs:
+              targetType: 'inline'
+              script: |
+                source /etc/environment
+                jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
+                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+                  -l "automatedtesting/jmeter/stressresults.jtl" \
+                  -e -o "automatedtesting/jmeter/stressreport"
 
-#           # Archive the JMeter log files
-#           - task: ArchiveFiles@2
-#             displayName: Archive JMeter Log Files
-#             inputs:
-#               rootFolderOrFile: "automatedtesting/jmeter"
-#               includeRootFolder: false
-#               archiveType: "zip"
-#               archiveFile: "jmeter-reports-$(Build.BuildId).zip"
-#               verbose: true
+          # Archive the JMeter log files
+          - task: ArchiveFiles@2
+            displayName: Archive JMeter Log Files
+            inputs:
+              rootFolderOrFile: "automatedtesting/jmeter"
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "jmeter-reports-$(Build.BuildId).zip"
+              verbose: true
 
-#           # Publish the JMeter log files
-#           - task: PublishBuildArtifacts@1
-#             displayName: Publish JMeter Artifacts
-#             inputs:
-#               PathtoPublish: 'automatedtesting/jmeter'
-#               ArtifactName: 'jmeter-results'
+          # Publish the JMeter log files
+          - task: PublishBuildArtifacts@1
+            displayName: Publish JMeter Artifacts
+            inputs:
+              PathtoPublish: 'automatedtesting/jmeter'
+              ArtifactName: 'jmeter-results'
 
-#   #--------------------------------------------#  
-#   # Selenium | Functional UI Tests
-#   - deployment: VMDeploy
-#     displayName: Selenium Tests
-#     environment:
-#       name: "test-vm"
-#       resourceType: VirtualMachine
-#     strategy:
-#       runOnce:
-#         deploy:
-#           steps:
-#           - download: current
-#             artifact: drop-uitests
-#             patterns: '**/*.zip'
+  #--------------------------------------------#  
+  # Selenium | Functional UI Tests
+  - deployment: VMDeploy
+    displayName: Selenium Tests
+    environment:
+      name: "test-vm"
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop-uitests
+            patterns: '**/*.zip'
             
-#           - task: Bash@3
-#             inputs:
-#               targetType: 'inline'
-#               script: |
-#                 #!/bin/bash
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                #!/bin/bash
 
-#                 # Upgrade and install dependencies
-#                 sudo apt-get update -y
-#                 sudo apt-get upgrade -y
-#                 sudo apt-get install -y python3.7
-#                 sudo apt-get install -y chromium-browser
+                # Upgrade and install dependencies
+                sudo apt-get update -y
+                sudo apt-get upgrade -y
+                sudo apt-get install -y python3.7
+                sudo apt-get install -y chromium-browser
                 
-#                 # Install virtualenv for Python3 if not already installed
-#                 sudo apt-get install -y python3.7-venv
+                # Install virtualenv for Python3 if not already installed
+                sudo apt-get install -y python3.7-venv
 
-#                 # Install pip for Python3 if not already installed
-#                 sudo apt-get install -y python3-pip
+                # Install pip for Python3 if not already installed
+                sudo apt-get install -y python3-pip
 
-#                 # Create a virtual environment
-#                 python3.7 -m venv venv
-#                 source venv/bin/activate
+                # Create a virtual environment
+                python3.7 -m venv venv
+                source venv/bin/activate
 
-#                 # Install selenium inside the virtual environment
-#                 pip3.7 install selenium
+                # Install selenium inside the virtual environment
+                pip3.7 install selenium
 
-#                 # Download and install Google Chrome
-#                 wget -P /tmp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-#                 sudo apt install -y /tmp/google-chrome-stable_current_amd64.deb
-#                 rm /tmp/google-chrome-stable_current_amd64.deb
+                # Download and install Google Chrome
+                wget -P /tmp https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+                sudo apt install -y /tmp/google-chrome-stable_current_amd64.deb
+                rm /tmp/google-chrome-stable_current_amd64.deb
 
-#                 # Set up app directory
-#                 cd ~/
-#                 DIR=/home/azureuser/app
-#                 if [ ! -d "$DIR" ]; then
-#                     mkdir app
-#                 fi
+                # Set up app directory
+                cd ~/
+                DIR=/home/azureuser/app
+                if [ ! -d "$DIR" ]; then
+                    mkdir app
+                fi
 
-#                 # Move the test zip file and unzip it
-#                 mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
-#                 cd app
-#                 unzip -o $(Build.BuildId)-uitests.zip
+                # Move the test zip file and unzip it
+                mv /home/azureuser/azagent/_work/1/drop-uitests/$(Build.BuildId)-uitests.zip app
+                cd app
+                unzip -o $(Build.BuildId)-uitests.zip
 
-#                 # Starting Selenium tests using the virtual environment's Python
-#                 echo "Starting Selenium Tests"
-#                 python add_remove_from_cart.py >> selenium.log
-#                 echo "Completed Selenium Tests. Check selenium.log for results."
+                # Starting Selenium tests using the virtual environment's Python
+                echo "Starting Selenium Tests"
+                python add_remove_from_cart.py >> selenium.log
+                echo "Completed Selenium Tests. Check selenium.log for results."
 
-#                 # Deactivate virtual environment
-#                 deactivate
+                # Deactivate virtual environment
+                deactivate
 
-#           - task: PublishTestResults@2
-#             inputs:
-#               testResultsFormat: 'JUnit'
-#               testResultsFiles: '**/selenium.log'
-#               searchFolder: '/home/azureuser/app'
-#               mergeTestResults: true
-#               testRunTitle: 'Selenium Tests'
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/selenium.log'
+              searchFolder: '/home/azureuser/app'
+              mergeTestResults: true
+              testRunTitle: 'Selenium Tests'
