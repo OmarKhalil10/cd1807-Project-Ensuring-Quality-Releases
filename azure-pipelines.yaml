@@ -382,7 +382,7 @@ stages:
 #--------------------------------------------#
 # Monitoring Stage
 #--------------------------------------------#
-# Monitoring stage to set up Azure Monitor and configure alerts
+# Monitoring stage to set up Azure Monitor and configure alerts 
 
 - stage: Monitoring
   displayName: 'Configure Monitoring and Alerts'
