@@ -198,6 +198,14 @@ stages:
                 echo "Listing package contents..."
                 ls -l $(Pipeline.Workspace)/drop-fakerestapi
   
+          # Install Azure CLI
+          - task: Bash@3
+            displayName: 'Install Azure CLI'
+            inputs:
+              targetType: 'inline'
+              script: |
+                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
           # Deploy the Application to Azure Web App
           - task: AzureCLI@2
             displayName: 'Deploy the Application to Azure Web App'
