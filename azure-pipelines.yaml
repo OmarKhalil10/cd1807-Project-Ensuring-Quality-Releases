@@ -382,99 +382,80 @@ stages:
               mergeTestResults: true
               testRunTitle: 'Selenium Tests'
 
+          # Install Azure CLI
+          - task: Bash@3
+            displayName: 'Install Azure CLI'
+            inputs:
+              targetType: 'inline'
+              script: |
+                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                
+          # step 1: Convert selenium.log to UTF-8 format
           - task: AzureCLI@2
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                # Upload the selenium.log file to Azure Blob Storage
-                az storage blob upload \
-                  --account-name $(storageAccountName) \
-                  --container-name $(containerName) \
-                  --name selenium.log \
-                  --file /home/azureuser/app/selenium.log \
-                  --account-key $(backendAzureRmKey)
+                # Convert selenium.log to UTF-8 format
+                iconv -f ISO-8859-1 -t UTF-8 /home/azureuser/app/selenium.log -o /home/azureuser/app/selenium_utf8.log
+                # Move the converted log file to a location for ingestion
+                mv /home/azureuser/app/selenium_utf8.log /home/azureuser/app/selenium.log
 
-#--------------------------------------------#
-# Monitoring Stage
-#--------------------------------------------#
-# Monitoring stage to set up Azure Monitor and configure alerts 
+          # Step 2: Configure custom log ingestion into Azure Monitor (Log Analytics workspace)
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Create a custom data collection rule to ingest selenium logs into Log Analytics
+                az monitor diagnostic-settings create \
+                  --name 'selenium-log-settings' \
+                  --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
+                  --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                  --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}}]'
 
-- stage: Monitoring
-  displayName: 'Configure Monitoring and Alerts'
-  jobs:
-    - job: ConfigureAzureMonitor
-      displayName: 'Configure Azure Monitor and Alerts'
-      pool:
-        name: 'myAgentPool'
-      steps:
-        # Step 1: Ensure the selenium.log file is in UTF-8 format for proper ingestion
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Convert selenium.log to UTF-8 format
-              iconv -f ISO-8859-1 -t UTF-8 /home/azureuser/app/selenium.log -o /home/azureuser/app/selenium_utf8.log
-              # Move the converted log file to a location for ingestion
-              mv /home/azureuser/app/selenium_utf8.log /home/azureuser/app/selenium.log
+          # Step 3: Create a log-based alert for failed Selenium tests based on the custom log category and log path
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Create a log-based alert for failed Selenium tests based on the custom log category
+                az monitor log-analytics alert rule create \
+                  --name 'Selenium Test Failure Alert' \
+                  --resource-group '$(backendAzureRmResourceGroupName)' \
+                  --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                  --description 'Alert triggered when selenium tests fail' \
+                  --query "CustomLogs | where Message contains 'Error' or Message contains 'FAIL'"  # Example query for failed tests in selenium.log
+                  --severity 3 \
+                  --action-group '$(email)'  # Replace $(email) with the action group's name or email ID
 
-        # Step 2: Configure custom log ingestion into Azure Monitor (Log Analytics workspace)
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Create a custom data collection rule to ingest selenium logs into Log Analytics
-              az monitor diagnostic-settings create \
-                --name 'selenium-log-settings' \
-                --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
-                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}}]'
+          # Step 4: Verify that the alert is created and enabled
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Check if the alert rule is created and enabled
+                az monitor log-analytics alert rule show \
+                  --resource-group '$(backendAzureRmResourceGroupName)' \
+                  --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                  --name 'Selenium Test Failure Alert'
 
-        # Step 3: Create a log-based alert for failed Selenium tests based on the custom log category and log path
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Create a log-based alert for failed Selenium tests based on the custom log category
-              az monitor log-analytics alert rule create \
-                --name 'Selenium Test Failure Alert' \
-                --resource-group '$(backendAzureRmResourceGroupName)' \
-                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --description 'Alert triggered when selenium tests fail' \
-                --query "CustomLogs | where Message contains 'Error' or Message contains 'FAIL'"  # Example query for failed tests in selenium.log
-                --severity 3 \
-                --action-group '$(email)'  # Replace $(email) with the action group's name or email ID
-
-        # Step 4: Verify that the alert is created and enabled
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Check if the alert rule is created and enabled
-              az monitor log-analytics alert rule show \
-                --resource-group '$(backendAzureRmResourceGroupName)' \
-                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --name 'Selenium Test Failure Alert'
-
-        # Step 5: Ensure logging is enabled for the VM then aggregate custom application events for troubleshooting
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Ensure logging is enabled for the VM and aggregate custom application events for troubleshooting
-              az monitor diagnostic-settings create \
-                --name 'vm-log-settings' \
-                --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
-                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --logs '[{"category": "VMGuestLogs", "enabled": true}]'
+          # Step 5: Ensure logging is enabled for the VM then aggregate custom application events for troubleshooting
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Ensure logging is enabled for the VM and aggregate custom application events for troubleshooting
+                az monitor diagnostic-settings create \
+                  --name 'vm-log-settings' \
+                  --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
+                  --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                  --logs '[{"category": "VMGuestLogs", "enabled": true}]'
