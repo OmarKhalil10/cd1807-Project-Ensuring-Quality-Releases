@@ -392,7 +392,19 @@ stages:
       pool:
         name: 'myAgentPool'
       steps:
-        # Step 1: Configure custom log ingestion into Azure Monitor (Log Analytics workspace)
+        # Step 1: Ensure the selenium.log file is in UTF-8 format for proper ingestion
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Convert selenium.log to UTF-8 format
+              iconv -f ISO-8859-1 -t UTF-8 /home/azureuser/app/selenium.log -o /home/azureuser/app/selenium_utf8.log
+              # Move the converted log file to a location for ingestion
+              mv /home/azureuser/app/selenium_utf8.log /home/azureuser/app/selenium.log
+
+        # Step 2: Configure custom log ingestion into Azure Monitor (Log Analytics workspace)
         - task: AzureCLI@2
           inputs:
             azureSubscription: '$(azureServiceConnectionId)'
@@ -404,16 +416,16 @@ stages:
                 --name 'selenium-log-settings' \
                 --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
                 --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}, "file": "/home/azureuser/app/selenium.log"}]'
-        
-        # Step 2: Verify alert logic and set the condition for triggering the alert based on custom log query
+                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}}]'
+
+        # Step 3: Create a log-based alert for failed Selenium tests based on the custom log category and log path
         - task: AzureCLI@2
           inputs:
             azureSubscription: '$(azureServiceConnectionId)'
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              # Create a log-based alert for failed Selenium tests based on the custom log category and log path
+              # Create a log-based alert for failed Selenium tests based on the custom log category
               az monitor log-analytics alert rule create \
                 --name 'Selenium Test Failure Alert' \
                 --resource-group '$(backendAzureRmResourceGroupName)' \
@@ -423,7 +435,7 @@ stages:
                 --severity 3 \
                 --action-group '$(email)'  # Replace $(email) with the action group's name or email ID
 
-        # Step 3: Verify that the alert is enabled and properly configured to notify the student via email
+        # Step 4: Verify that the alert is created and enabled
         - task: AzureCLI@2
           inputs:
             azureSubscription: '$(azureServiceConnectionId)'
@@ -435,8 +447,8 @@ stages:
                 --resource-group '$(backendAzureRmResourceGroupName)' \
                 --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
                 --name 'Selenium Test Failure Alert'
-            
-        # Step 4: Configure Azure Monitor to enable logging for the VM in the Azure Portal and aggregate events
+
+        # Step 5: Ensure logging is enabled for the VM and aggregate custom application events for troubleshooting
         - task: AzureCLI@2
           inputs:
             azureSubscription: '$(azureServiceConnectionId)'
@@ -449,15 +461,3 @@ stages:
                 --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
                 --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
                 --logs '[{"category": "VMGuestLogs", "enabled": true}]'
-
-        # Step 5: Configure custom logging and ensure UTF-8 encoding for selenium.log to ensure correct ingestion
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Ensure the selenium.log file is in UTF-8 format for proper ingestion
-              iconv -f ISO-8859-1 -t UTF-8 /home/azureuser/app/selenium.log -o /home/azureuser/app/selenium_utf8.log
-              # Move the converted log file to a location for ingestion
-              mv /home/azureuser/app/selenium_utf8.log /home/azureuser/app/selenium.log
