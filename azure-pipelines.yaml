@@ -41,9 +41,9 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
         backendAzureRmResourceGroupName: '$(resourceGroupName)'
-        backendAzureRmStorageAccountName: 'tfstate2330325985'
+        backendAzureRmStorageAccountName: 'tfstate200503456'
         backendAzureRmContainerName: 'tfstate'
-        backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
+        backendAzureRmKey: '92ctIi00pDmSlu8PD0m6Svro5wO/9cBy8UZU0F6o1rzrqnYbYoigivjWa+Ex2Cc1KsX0Yvk8h7Mo+ASt/Z8Lpw=='
     
     # Run Terraform validate on the pipeline agent 
     - task: TerraformTaskV4@4
@@ -198,6 +198,16 @@ stages:
                 echo "Listing package contents..."
                 ls -l $(Pipeline.Workspace)/drop-fakerestapi
   
+          # # Deploy the Azure Web App
+          # - task: AzureWebApp@1
+          #   displayName: 'Deploy Azure Web App'
+          #   inputs:
+          #     azureSubscription: '$(azureServiceConnectionId)'
+          #     appName: 'myApplication-AppService'
+          #     appType: webApp
+          #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
+          #     deploymentMethod: zipDeploy
+
           # Install Azure CLI
           - task: Bash@3
             displayName: 'Install Azure CLI'
