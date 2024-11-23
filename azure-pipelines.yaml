@@ -8,6 +8,10 @@ variables:
   azureServiceConnectionId: 'myServiceConnection'
   projectRoot: $(System.DefaultWorkingDirectory)
   environmentName: 'test-vm'
+  resourceGroupName: 'Azuredevops'
+  appServiceName: 'myApplication-AppService'
+  workspace-name: 'log-analytics-workspace'
+  email: 'omar.khalil498@gmail.com'
 
 stages:
 #--------------------------------------------#  
@@ -36,7 +40,7 @@ stages:
         command: 'init'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         backendServiceArm: 'myServiceConnection'
-        backendAzureRmResourceGroupName: 'Azuredevops'
+        backendAzureRmResourceGroupName: '$(resourceGroupName)'
         backendAzureRmStorageAccountName: 'tfstate2330325985'
         backendAzureRmContainerName: 'tfstate'
         backendAzureRmKey: '6iK9aOWfxGaHVJvb9JkTyPRjXrqr/KE1noB2+QgxUA/SLyRtcLoS70cORbo07kg/w4pgaOVI647A+ASt03Actw=='
@@ -185,16 +189,28 @@ stages:
               fi
             displayName: 'Check Artifact Accessibility'
 
-          # Deploy the Azure Web App
-          - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App'
+          # Package Verification (Optional)
+          - task: Bash@3
+            displayName: 'Verify ZIP Package'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "Listing package contents..."
+                ls -l $(Pipeline.Workspace)/drop-fakerestapi
+  
+          # Deploy the Application to Azure Web App
+          - task: AzureCLI@2
+            displayName: 'Deploy the Application to Azure Web App'
             inputs:
               azureSubscription: '$(azureServiceConnectionId)'
-              appName: 'myApplication-AppService'
-              appType: webApp
-              package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
-              deploymentMethod: zipDeploy
-          
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az webapp deployment source config-zip \
+                  --resource-group $(resourceGroupName) \
+                  --name $(appServiceName) \
+                  --src $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
+        
           # Install Java
           - task: Bash@3
             displayName: Install Java
@@ -344,3 +360,87 @@ stages:
               searchFolder: '/home/azureuser/app'
               mergeTestResults: true
               testRunTitle: 'Selenium Tests'
+
+#--------------------------------------------#
+# Monitoring Stage
+#--------------------------------------------#
+# Monitoring stage to set up Azure Monitor and configure alerts
+
+- stage: Monitoring
+  displayName: 'Configure Monitoring and Alerts'
+  jobs:
+    - job: ConfigureAzureMonitor
+      displayName: 'Configure Azure Monitor and Alerts'
+      pool:
+        name: 'myAgentPool'
+      steps:
+        # Step 1: Configure custom log ingestion into Azure Monitor (Log Analytics workspace)
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Create a custom data collection rule to ingest selenium logs into Log Analytics
+              az monitor diagnostic-settings create \
+                --name 'selenium-log-settings' \
+                --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
+                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}}]' \
+                --log '/home/azureuser/app/selenium.log'  # Specify the path to selenium.log file on the VM
+
+        # Step 2: Verify alert logic and set the condition for triggering the alert based on custom log query
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Create a log-based alert for failed Selenium tests based on the custom log category and log path
+              az monitor log-analytics alert rule create \
+                --name 'Selenium Test Failure Alert' \
+                --resource-group '$(backendAzureRmResourceGroupName)' \
+                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                --description 'Alert triggered when selenium tests fail' \
+                --query "CustomLogs | where Message contains 'Error' or Message contains 'FAIL'"  # Example query for failed tests in selenium.log
+                --severity 3 \
+                --action-group '$(email)'  # Replace $(email) with the action group's name or email ID
+
+        # Step 3: Verify that the alert is enabled and properly configured to notify the student via email
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Check if the alert rule is created and enabled
+              az monitor log-analytics alert rule show \
+                --resource-group '$(backendAzureRmResourceGroupName)' \
+                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                --name 'Selenium Test Failure Alert'
+            
+        # Step 4: Configure Azure Monitor to enable logging for the VM in the Azure Portal and aggregate events
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Ensure logging is enabled for the VM and aggregate custom application events for troubleshooting
+              az monitor diagnostic-settings create \
+                --name 'vm-log-settings' \
+                --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
+                --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
+                --logs '[{"category": "VMGuestLogs", "enabled": true}]'
+
+        # Step 5: Configure custom logging and ensure UTF-8 encoding for selenium.log to ensure correct ingestion
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: '$(azureServiceConnectionId)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              # Ensure the selenium.log file is in UTF-8 format for proper ingestion
+              iconv -f ISO-8859-1 -t UTF-8 /home/azureuser/app/selenium.log -o /home/azureuser/app/selenium_utf8.log
+              # Move the converted log file to a location for ingestion
+              mv /home/azureuser/app/selenium_utf8.log /home/azureuser/app/selenium.log
