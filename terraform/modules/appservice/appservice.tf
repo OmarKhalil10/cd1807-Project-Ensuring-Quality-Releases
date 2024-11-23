@@ -13,13 +13,13 @@ resource "azurerm_windows_web_app" "test" {
   service_plan_id     = azurerm_service_plan.test.id
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = 1
+    "WEBSITE_RUN_FROM_PACKAGE" = 0
   }
   site_config {
     always_on = false
-    application_stack {
-      current_stack  = "dotnet"
-      dotnet_version = "v5.0"
+    application_stack{
+      current_stack = "dotnet"
+      dotnet_version = "v4.0"
     }
   }
 }
