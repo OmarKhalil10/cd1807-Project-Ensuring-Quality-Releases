@@ -404,9 +404,8 @@ stages:
                 --name 'selenium-log-settings' \
                 --resource '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.Compute/virtualMachines/$(environmentName)' \
                 --workspace '/subscriptions/$(azureServiceConnectionId)/resourceGroups/$(backendAzureRmResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$(workspace-name)' \
-                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}}]' \
-                --log '/home/azureuser/app/selenium.log'  # Specify the path to selenium.log file on the VM
-
+                --logs '[{"category": "CustomLogs", "enabled": true, "retentionPolicy": {"enabled": true, "days": 30}, "file": "/home/azureuser/app/selenium.log"}]'
+        
         # Step 2: Verify alert logic and set the condition for triggering the alert based on custom log query
         - task: AzureCLI@2
           inputs:
