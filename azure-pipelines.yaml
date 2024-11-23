@@ -27,43 +27,43 @@ stages:
       name: myAgentPool
     steps:
 
-    #--------------------------------------------#  
-    # Use Terraform to create the Infrastructure      
-    # Install Terraform on the pipeline agent 
-    - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
-      displayName: 'Terraform installation'
-      inputs:
-        terraformVersion: '1.6.3'
+    # #--------------------------------------------#  
+    # # Use Terraform to create the Infrastructure      
+    # # Install Terraform on the pipeline agent 
+    # - task: JasonBJohnson.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+    #   displayName: 'Terraform installation'
+    #   inputs:
+    #     terraformVersion: '1.6.3'
 
-    # Run Terraform Init on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: 'Terraform init'
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        backendServiceArm: 'myServiceConnection'
-        backendAzureRmResourceGroupName: '$(resourceGroupName)'
-        backendAzureRmStorageAccountName: '$(storageAccountName)'
-        backendAzureRmContainerName: '$(containerName)'
-        backendAzureRmKey: '$(backendAzureRmKey)'
+    # # Run Terraform Init on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: 'Terraform init'
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'init'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    #     backendServiceArm: 'myServiceConnection'
+    #     backendAzureRmResourceGroupName: '$(resourceGroupName)'
+    #     backendAzureRmStorageAccountName: '$(storageAccountName)'
+    #     backendAzureRmContainerName: '$(containerName)'
+    #     backendAzureRmKey: '$(backendAzureRmKey)'
     
-    # Run Terraform validate on the pipeline agent 
-    - task: TerraformTaskV4@4
-      displayName: Terraform validate
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    # # Run Terraform validate on the pipeline agent 
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform validate
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'validate'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
-    # Run Terraform Apply
-    - task: TerraformTaskV4@4
-      displayName: Terraform apply
-      inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-        environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
+    # # Run Terraform Apply
+    # - task: TerraformTaskV4@4
+    #   displayName: Terraform apply
+    #   inputs:
+    #     provider: 'azurerm'
+    #     command: 'apply'
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
+    #     environmentServiceNameAzureRM: '$(azureServiceConnectionId)'
 
     # ToDo: Change the workingDirectory path, as applicable to you
     # Destroy the resources in Azure by running a separate pipeline. 
@@ -161,152 +161,152 @@ stages:
       displayName: 'Upload Package'
       artifact: drop-perftests
 
-#--------------------------------------------#  
-# DEPLOYMENT STAGE
-#--------------------------------------------#    
-- stage: Deploy
-  jobs:
-  #--------------------------------------------#  
-  # Deploy FakeRestAPI Web App
-  - deployment: FakeRestAPI
-    pool:
-      name: 'myAgentPool'
-    environment: "test-vm"
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          # Debugging step to print variables
-          - script: |
-              echo "Azure Service Connection ID: $(azureServiceConnectionId)"
-              echo "App Name: myApplication-AppService"
-              echo "Package Path: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip"
-            displayName: 'Print Variables'
+# #--------------------------------------------#  
+# # DEPLOYMENT STAGE
+# #--------------------------------------------#    
+# - stage: Deploy
+#   jobs:
+#   #--------------------------------------------#  
+#   # Deploy FakeRestAPI Web App
+#   - deployment: FakeRestAPI
+#     pool:
+#       name: 'myAgentPool'
+#     environment: "test-vm"
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#           # Debugging step to print variables
+#           - script: |
+#               echo "Azure Service Connection ID: $(azureServiceConnectionId)"
+#               echo "App Name: myApplication-AppService"
+#               echo "Package Path: $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip"
+#             displayName: 'Print Variables'
 
-          # Debugging step to check artifact accessibility
-          - script: |
-              if [ -f "$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip" ]; then
-                echo "Artifact exists and is accessible."
-              else
-                echo "Artifact does not exist or is not accessible."
-              fi
-            displayName: 'Check Artifact Accessibility'
+#           # Debugging step to check artifact accessibility
+#           - script: |
+#               if [ -f "$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip" ]; then
+#                 echo "Artifact exists and is accessible."
+#               else
+#                 echo "Artifact does not exist or is not accessible."
+#               fi
+#             displayName: 'Check Artifact Accessibility'
 
-          # Package Verification (Optional)
-          - task: Bash@3
-            displayName: 'Verify ZIP Package'
-            inputs:
-              targetType: 'inline'
-              script: |
-                echo "Listing package contents..."
-                ls -l $(Pipeline.Workspace)/drop-fakerestapi
+#           # Package Verification (Optional)
+#           - task: Bash@3
+#             displayName: 'Verify ZIP Package'
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 echo "Listing package contents..."
+#                 ls -l $(Pipeline.Workspace)/drop-fakerestapi
   
-          # # Deploy the Azure Web App
-          # - task: AzureWebApp@1
-          #   displayName: 'Deploy Azure Web App'
-          #   inputs:
-          #     azureSubscription: '$(azureServiceConnectionId)'
-          #     appName: 'myApplication-AppService'
-          #     appType: webApp
-          #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
-          #     deploymentMethod: zipDeploy
+#           # # Deploy the Azure Web App
+#           # - task: AzureWebApp@1
+#           #   displayName: 'Deploy Azure Web App'
+#           #   inputs:
+#           #     azureSubscription: '$(azureServiceConnectionId)'
+#           #     appName: 'myApplication-AppService'
+#           #     appType: webApp
+#           #     package: '$(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip'
+#           #     deploymentMethod: zipDeploy
 
-          # Install Azure CLI
-          - task: Bash@3
-            displayName: 'Install Azure CLI'
-            inputs:
-              targetType: 'inline'
-              script: |
-                curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+#           # Install Azure CLI
+#           - task: Bash@3
+#             displayName: 'Install Azure CLI'
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-          # Deploy the Application to Azure Web App
-          - task: AzureCLI@2
-            displayName: 'Deploy the Application to Azure Web App'
-            inputs:
-              azureSubscription: '$(azureServiceConnectionId)'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                az webapp deployment source config-zip \
-                  --resource-group $(resourceGroupName) \
-                  --name $(appServiceName) \
-                  --src $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
+#           # Deploy the Application to Azure Web App
+#           - task: AzureCLI@2
+#             displayName: 'Deploy the Application to Azure Web App'
+#             inputs:
+#               azureSubscription: '$(azureServiceConnectionId)'
+#               scriptType: 'bash'
+#               scriptLocation: 'inlineScript'
+#               inlineScript: |
+#                 az webapp deployment source config-zip \
+#                   --resource-group $(resourceGroupName) \
+#                   --name $(appServiceName) \
+#                   --src $(Pipeline.Workspace)/drop-fakerestapi/$(Build.BuildId)-fakerestapi.zip
         
-          # Install Java
-          - task: Bash@3
-            displayName: Install Java
-            inputs:
-              targetType: 'inline'
-              script: |
-                sudo apt update
-                sudo apt install -y openjdk-11-jdk
-                echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
-                source /etc/environment
-                echo "Java installed and JAVA_HOME set to $JAVA_HOME"
+#           # Install Java
+#           - task: Bash@3
+#             displayName: Install Java
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 sudo apt update
+#                 sudo apt install -y openjdk-11-jdk
+#                 echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" | sudo tee -a /etc/environment
+#                 source /etc/environment
+#                 echo "Java installed and JAVA_HOME set to $JAVA_HOME"
 
-          # Jmeter installation
-          - task: Bash@3
-            displayName: Install JMeter
-            inputs:
-              targetType: 'inline'
-              script: |
-                wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
-                tar -xvzf apache-jmeter-5.6.3.tgz
+#           # Jmeter installation
+#           - task: Bash@3
+#             displayName: Install JMeter
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 wget "https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz"
+#                 tar -xvzf apache-jmeter-5.6.3.tgz
                 
-                # Check if the JMeter directory already exists
-                if [ -d "/opt/apache-jmeter-5.6.3" ]; then
-                    echo "JMeter directory already exists. Skipping move."
-                else
-                    sudo mv apache-jmeter-5.6.3 /opt/
-                fi
+#                 # Check if the JMeter directory already exists
+#                 if [ -d "/opt/apache-jmeter-5.6.3" ]; then
+#                     echo "JMeter directory already exists. Skipping move."
+#                 else
+#                     sudo mv apache-jmeter-5.6.3 /opt/
+#                 fi
                 
-                # Check if the symbolic link already exists
-                if [ -L /usr/local/bin/jmeter ]; then
-                    echo "JMeter symbolic link already exists. Skipping link creation."
-                else
-                    sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
-                fi
+#                 # Check if the symbolic link already exists
+#                 if [ -L /usr/local/bin/jmeter ]; then
+#                     echo "JMeter symbolic link already exists. Skipping link creation."
+#                 else
+#                     sudo ln -s /opt/apache-jmeter-5.6.3/bin/jmeter /usr/local/bin/jmeter
+#                 fi
                 
-          # JMeter - Run the Endurance Test Suite
-          - task: Bash@3
-            displayName: Endurance Test
-            inputs:
-              targetType: 'inline'
-              script: |
-                source /etc/environment
-                jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
-                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-                  -l "automatedtesting/jmeter/enduranceresults.jtl" \
-                  -e -o "automatedtesting/jmeter/endurancereport"
+#           # JMeter - Run the Endurance Test Suite
+#           - task: Bash@3
+#             displayName: Endurance Test
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 source /etc/environment
+#                 jmeter -n -t "automatedtesting/jmeter/EnduranceTest.jmx" \
+#                   -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+#                   -l "automatedtesting/jmeter/enduranceresults.jtl" \
+#                   -e -o "automatedtesting/jmeter/endurancereport"
 
-          # Run the JMeter Stress Test Suite
-          - task: Bash@3
-            displayName: Stress Test
-            inputs:
-              targetType: 'inline'
-              script: |
-                source /etc/environment
-                jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
-                  -Jresdir="automatedtesting/jmeter/book_ids.csv" \
-                  -l "automatedtesting/jmeter/stressresults.jtl" \
-                  -e -o "automatedtesting/jmeter/stressreport"
+#           # Run the JMeter Stress Test Suite
+#           - task: Bash@3
+#             displayName: Stress Test
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 source /etc/environment
+#                 jmeter -n -t "automatedtesting/jmeter/StressTest.jmx" \
+#                   -Jresdir="automatedtesting/jmeter/book_ids.csv" \
+#                   -l "automatedtesting/jmeter/stressresults.jtl" \
+#                   -e -o "automatedtesting/jmeter/stressreport"
 
-          # Archive the JMeter log files
-          - task: ArchiveFiles@2
-            displayName: Archive JMeter Log Files
-            inputs:
-              rootFolderOrFile: "automatedtesting/jmeter"
-              includeRootFolder: false
-              archiveType: "zip"
-              archiveFile: "jmeter-reports-$(Build.BuildId).zip"
-              verbose: true
+#           # Archive the JMeter log files
+#           - task: ArchiveFiles@2
+#             displayName: Archive JMeter Log Files
+#             inputs:
+#               rootFolderOrFile: "automatedtesting/jmeter"
+#               includeRootFolder: false
+#               archiveType: "zip"
+#               archiveFile: "jmeter-reports-$(Build.BuildId).zip"
+#               verbose: true
 
-          # Publish the JMeter log files
-          - task: PublishBuildArtifacts@1
-            displayName: Publish JMeter Artifacts
-            inputs:
-              PathtoPublish: 'automatedtesting/jmeter'
-              ArtifactName: 'jmeter-results'
+#           # Publish the JMeter log files
+#           - task: PublishBuildArtifacts@1
+#             displayName: Publish JMeter Artifacts
+#             inputs:
+#               PathtoPublish: 'automatedtesting/jmeter'
+#               ArtifactName: 'jmeter-results'
 
   #--------------------------------------------#  
   # Selenium | Functional UI Tests
@@ -382,6 +382,20 @@ stages:
               mergeTestResults: true
               testRunTitle: 'Selenium Tests'
 
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: '$(azureServiceConnectionId)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Upload the selenium.log file to Azure Blob Storage
+                az storage blob upload \
+                  --account-name $(storageAccountName) \
+                  --container-name $(containerName) \
+                  --name selenium.log \
+                  --file /home/azureuser/app/selenium.log \
+                  --account-key $(backendAzureRmKey)
+
 #--------------------------------------------#
 # Monitoring Stage
 #--------------------------------------------#
@@ -395,21 +409,6 @@ stages:
       pool:
         name: 'myAgentPool'
       steps:
-        # Step 0: Upload the selenium.log file to Azure Blob Storage
-        - task: AzureCLI@2
-          inputs:
-            azureSubscription: '$(azureServiceConnectionId)'
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              # Upload the selenium.log file to Azure Blob Storage
-              az storage blob upload \
-                --account-name $(storageAccountName) \
-                --container-name $(containerName) \
-                --name selenium.log \
-                --file /home/azureuser/app/selenium.log \
-                --auth-mode key
-
         # Step 1: Ensure the selenium.log file is in UTF-8 format for proper ingestion
         - task: AzureCLI@2
           inputs:
