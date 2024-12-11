@@ -15,7 +15,7 @@ resource "azurerm_linux_virtual_machine" "test" {
   name                  = "${var.resource_type}-${var.application_type}"
   location              = var.location
   resource_group_name   = var.resource_group
-  size                  = "Standard_DS1_v2"  # Updated size
+  size                  = "Standard_DS2_v2"
   admin_username        = var.admin_username
 
   network_interface_ids = [
