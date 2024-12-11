@@ -1,0 +1,24 @@
+2024-12-11T10:06:40Z Starting Chrome...
+2024-12-11T10:06:41Z Navigating to the demo page to login.
+2024-12-11T10:06:42Z Entering username...
+2024-12-11T10:06:42Z Entering password...
+2024-12-11T10:06:42Z Clicking login button...
+2024-12-11T10:06:42Z Login successful.
+2024-12-11T10:06:42Z Adding products to the cart...
+2024-12-11T10:06:43Z Product 'Sauce Labs Backpack' added to the cart.
+2024-12-11T10:06:43Z Product 'Sauce Labs Bike Light' added to the cart.
+2024-12-11T10:06:43Z Product 'Sauce Labs Bolt T-Shirt' added to the cart.
+2024-12-11T10:06:43Z Product 'Sauce Labs Fleece Jacket' added to the cart.
+2024-12-11T10:06:43Z Product 'Sauce Labs Onesie' added to the cart.
+2024-12-11T10:06:43Z Product 'Test.allTheThings() T-Shirt (Red)' added to the cart.
+2024-12-11T10:06:43Z All products added successfully. Cart count = 6
+2024-12-11T10:06:43Z Navigating to the cart page...
+2024-12-11T10:06:43Z Removing all products from the cart...
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z Product removed.
+2024-12-11T10:06:43Z All products removed successfully.
+2024-12-11T10:06:43Z Browser closed.
